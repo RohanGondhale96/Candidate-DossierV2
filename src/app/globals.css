@@ -2,26 +2,143 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
+@layer base {
   :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+    --background: 0 0% 100%;
+    --foreground: 222 24% 14%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 24% 14%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222 24% 14%;
+
+    /* Brand color lives in --primary (shadcn convention — no separate brand
+       token). RippleHire brand blue #0076FB. Tints use /opacity utilities. */
+    --primary: 212 100% 49%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 220 16% 96%;
+    --secondary-foreground: 222 24% 18%;
+    --muted: 220 16% 96%;
+    --muted-foreground: 220 12% 46%;
+    --accent: 220 16% 94%;
+    --accent-foreground: 222 24% 18%;
+    --destructive: 0 72.2% 50.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 220 14% 91%;
+    --input: 220 14% 91%;
+    --ring: 212 100% 49%;
+    --radius: 0.625rem;
+  }
+
+  .dark {
+    --background: 222.2 47.4% 11.2%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 47.4% 11.2%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 47.4% 11.2%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
   }
 }
 
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
 }
 
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
+/* ─── Resume builder: inline editing affordances ─────────────────── */
+
+/* Editable text looks like plain resume text until focused */
+.inline-editable .ProseMirror {
+  outline: none;
+  border-radius: 4px;
+  transition: box-shadow 0.15s ease, background-color 0.15s ease;
+  cursor: text;
+}
+.inline-editable:hover .ProseMirror {
+  box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.25);
+}
+.inline-editable .ProseMirror-focused,
+.inline-editable .ProseMirror:focus {
+  box-shadow: 0 0 0 1.5px rgba(59, 130, 246, 0.7);
+  outline: 1px dashed rgba(59, 130, 246, 0.7);
+  outline-offset: 1px;
+  background-color: rgba(59, 130, 246, 0.04);
+}
+
+/* Tiptap placeholder */
+.ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  float: left;
+  color: #9ca3af;
+  pointer-events: none;
+  height: 0;
+}
+.ProseMirror p {
+  margin: 0;
+}
+.ProseMirror ul {
+  list-style: disc;
+  padding-left: 1.25rem;
+  margin: 0.25rem 0;
+}
+.ProseMirror ol {
+  list-style: decimal;
+  padding-left: 1.25rem;
+  margin: 0.25rem 0;
+}
+
+/* The resume "page" — looks like a printed A4 document */
+.resume-page {
+  width: 210mm;
+  min-height: 297mm;
+  background: white;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 8px 24px rgba(0, 0, 0, 0.08);
+}
+
+/* ─── Print: only the resume page is printed ─────────────────────── */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .print-area,
+  .print-area * {
+    visibility: visible;
+  }
+  .print-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .resume-page {
+    box-shadow: none;
+    width: 100%;
+    min-height: auto;
+    margin: 0;
+  }
+  @page {
+    size: A4;
+    margin: 0;
   }
 }

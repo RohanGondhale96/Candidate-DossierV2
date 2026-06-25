@@ -1,0 +1,195 @@
+// Candidate Dossier — Prisma schema
+// Originally built on SQLite (local dev); now PostgreSQL (Neon) for deployment.
+// To keep the data layer unchanged across the move, we intentionally KEEP the
+// SQLite-era column shapes rather than restoring native Postgres types:
+//   - enums (UserRole, PipelineStage) are String, validated by constants in
+//     src/lib/constants.ts
+//   - String[] arrays (skills, requiredSkills) are stored as JSON strings
+//   - structured Json (experience, education, certifications, resume content)
+//     is stored as JSON strings and (de)serialized in the data layer (lib/api.ts)
+// This means zero application-code changes were needed to switch providers.
+//
+// DATABASE_URL      = pooled connection (used at runtime by the app)
+// DIRECT_DATABASE_URL = direct/unpooled connection (used by migrate / db push)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_DATABASE_URL")
+}
+
+// ─── AUTH & USERS ────────────────────────────────────
+
+model User {
+  id             String   @id @default(cuid())
+  email          String   @unique
+  name           String
+  passwordHash   String
+  role           String // "VENDOR" | "CLIENT"
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  candidateJobs CandidateJob[] @relation("VendorCandidateJobs")
+  comments      Comment[]
+
+  @@index([organizationId])
+  @@index([role])
+}
+
+model Organization {
+  id        String   @id @default(cuid())
+  name      String
+  type      String // "VENDOR" | "CLIENT"
+  logoUrl   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users      User[]
+  clientJobs Job[]                 @relation("ClientJobs")
+  vendorJobs VendorJobAssignment[]
+}
+
+// ─── JOBS ────────────────────────────────────────────
+
+model Job {
+  id             String   @id @default(cuid())
+  title          String
+  description    String
+  requirements   String
+  requiredSkills String // JSON string: string[]
+  location       String?
+  salaryRange    String?
+  openPositions  Int      @default(1)
+  clientId       String
+  client         Organization @relation("ClientJobs", fields: [clientId], references: [id])
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  candidateJobs     CandidateJob[]
+  vendorAssignments VendorJobAssignment[]
+
+  @@index([clientId])
+}
+
+model VendorJobAssignment {
+  id         String   @id @default(cuid())
+  vendorId   String
+  vendor     Organization @relation(fields: [vendorId], references: [id])
+  jobId      String
+  job        Job          @relation(fields: [jobId], references: [id])
+  assignedAt DateTime @default(now())
+
+  @@unique([vendorId, jobId])
+}
+
+// ─── CANDIDATES ──────────────────────────────────────
+
+model Candidate {
+  id                String   @id @default(cuid())
+  rippleHireId      String   @unique
+  firstName         String
+  lastName          String
+  email             String
+  phone             String?
+  currentTitle      String?
+  yearsOfExperience Float?
+  location          String?
+  noticePeriod      String? // e.g. "Within 30 days"
+  expectedSalary    String? // e.g. "12L - 16L"
+  skills            String // JSON string: string[]
+  summary           String?
+  experience        String // JSON string: ExperienceEntry[]
+  education         String // JSON string: EducationEntry[]
+  certifications    String? // JSON string: CertificationEntry[]
+  originalResumeUrl String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  candidateJobs CandidateJob[]
+}
+
+// ─── CANDIDATE ↔ JOB PIPELINE ────────────────────────
+
+model CandidateJob {
+  id              String  @id @default(cuid())
+  candidateId     String
+  candidate       Candidate @relation(fields: [candidateId], references: [id])
+  jobId           String
+  job             Job       @relation(fields: [jobId], references: [id])
+  vendorUserId    String
+  vendor          User      @relation("VendorCandidateJobs", fields: [vendorUserId], references: [id])
+  stage           String  @default("SHORTLISTED") // PipelineStage
+  rejectedAtStage String? // PipelineStage the candidate was rejected from
+  recruiterNotes  String?
+
+  resume         ResumeData?
+  resumeVersions ResumeVersion[]
+  comments       Comment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([candidateId, jobId, vendorUserId])
+  @@index([jobId, vendorUserId])
+  @@index([stage])
+}
+
+// ─── RESUME DATA ─────────────────────────────────────
+
+model ResumeData {
+  id             String   @id @default(cuid())
+  candidateJobId String   @unique
+  candidateJob   CandidateJob @relation(fields: [candidateJobId], references: [id])
+  templateId     String   @default("classic")
+  accentColor    String   @default("#6B4FBB")
+  fontFamily     String   @default("")
+  logoUrl        String?
+  logoHidden     Boolean  @default(false)
+  content        String // JSON string: ResumeContent
+  jobMatchScore  Float?
+  qualityScore   Float?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+model ResumeVersion {
+  id             String   @id @default(cuid())
+  candidateJobId String
+  candidateJob   CandidateJob @relation(fields: [candidateJobId], references: [id])
+  versionNumber  Int
+  content        String // JSON string: ResumeContent
+  templateId     String
+  accentColor    String
+  fontFamily     String   @default("")
+  logoUrl        String?
+  logoHidden     Boolean  @default(false)
+  jobMatchScore  Float?
+  qualityScore   Float?
+  createdBy      String
+  changeNote     String?
+  createdAt      DateTime @default(now())
+
+  @@unique([candidateJobId, versionNumber])
+  @@index([candidateJobId])
+}
+
+// ─── CLIENT COMMENTS ─────────────────────────────────
+
+model Comment {
+  id             String   @id @default(cuid())
+  candidateJobId String
+  candidateJob   CandidateJob @relation(fields: [candidateJobId], references: [id])
+  userId         String
+  user           User     @relation(fields: [userId], references: [id])
+  content        String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([candidateJobId])
+}
