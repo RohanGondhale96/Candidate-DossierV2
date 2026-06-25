@@ -8,7 +8,7 @@ import type {
   SectionData,
   RecruiterNoteData,
 } from "@/types/resume";
-import { DEFAULT_ACCENT, DEFAULT_TEMPLATE } from "@/types/resume";
+import { DEFAULT_ACCENT, DEFAULT_TEMPLATE, DEFAULT_FONT } from "@/types/resume";
 import { createEmptySection } from "@/lib/resume-content";
 import { computeScores } from "@/lib/scoring";
 import type { PipelineStage } from "@/lib/constants";
@@ -114,7 +114,7 @@ export const useResumeStore = create<ResumeStore>((set, get) => ({
   content: { sections: [] },
   templateId: DEFAULT_TEMPLATE,
   accentColor: DEFAULT_ACCENT,
-  fontFamily: "",
+  fontFamily: DEFAULT_FONT,
   logoUrl: null,
   logoHidden: false,
 
@@ -145,7 +145,7 @@ export const useResumeStore = create<ResumeStore>((set, get) => ({
       content: { sections: reindex(data.resume.content.sections) },
       templateId: data.resume.templateId,
       accentColor: data.resume.accentColor,
-      fontFamily: data.resume.fontFamily ?? "",
+      fontFamily: data.resume.fontFamily || DEFAULT_FONT,
       logoUrl: data.resume.logoUrl,
       logoHidden: data.resume.logoHidden,
       jobRequiredSkills: data.job.requiredSkills,
@@ -233,7 +233,7 @@ export const useResumeStore = create<ResumeStore>((set, get) => ({
       content: { sections: reindex(resume.content.sections) },
       templateId: resume.templateId,
       accentColor: resume.accentColor,
-      fontFamily: resume.fontFamily ?? "",
+      fontFamily: resume.fontFamily || DEFAULT_FONT,
       logoUrl: resume.logoUrl,
       logoHidden: resume.logoHidden,
       jobMatchScore: resume.jobMatchScore,

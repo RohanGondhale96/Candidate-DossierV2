@@ -167,7 +167,8 @@ export const FONT_OPTIONS: FontOption[] = [
   { id: "opensans", label: "Open Sans", stack: "'Open Sans', sans-serif" },
 ];
 
-export const DEFAULT_FONT = "";
+// Roboto is the default font for every resume (template stays "classic").
+export const DEFAULT_FONT = "roboto";
 
 // Resolve a font id to its CSS font-family stack. Returns undefined for the
 // empty-string id so callers can leave the style unset (template default).

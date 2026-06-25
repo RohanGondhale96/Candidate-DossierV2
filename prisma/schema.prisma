@@ -148,7 +148,7 @@ model ResumeData {
   candidateJob   CandidateJob @relation(fields: [candidateJobId], references: [id])
   templateId     String   @default("classic")
   accentColor    String   @default("#6B4FBB")
-  fontFamily     String   @default("")
+  fontFamily     String   @default("roboto")
   logoUrl        String?
   logoHidden     Boolean  @default(false)
   content        String // JSON string: ResumeContent
@@ -166,7 +166,7 @@ model ResumeVersion {
   content        String // JSON string: ResumeContent
   templateId     String
   accentColor    String
-  fontFamily     String   @default("")
+  fontFamily     String   @default("roboto")
   logoUrl        String?
   logoHidden     Boolean  @default(false)
   jobMatchScore  Float?

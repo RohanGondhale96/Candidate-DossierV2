@@ -8,7 +8,7 @@ import {
   toCandidateProfile,
 } from "@/lib/candidate-job";
 import { buildInitialResumeContent } from "@/lib/resume-content";
-import { DEFAULT_ACCENT, DEFAULT_TEMPLATE } from "@/types/resume";
+import { DEFAULT_ACCENT, DEFAULT_TEMPLATE, DEFAULT_FONT } from "@/types/resume";
 import type { ResumeContent } from "@/types/resume";
 import type { PipelineStage } from "@/lib/constants";
 
@@ -63,7 +63,8 @@ export async function GET(_req: NextRequest, { params }: Params) {
       resume: {
         templateId: cj.resume?.templateId ?? DEFAULT_TEMPLATE,
         accentColor: cj.resume?.accentColor ?? DEFAULT_ACCENT,
-        fontFamily: cj.resume?.fontFamily ?? "",
+        // Empty/unset font falls back to Roboto (the app-wide default).
+        fontFamily: cj.resume?.fontFamily || DEFAULT_FONT,
         logoUrl: cj.resume?.logoUrl ?? null,
         logoHidden: cj.resume?.logoHidden ?? false,
         content,

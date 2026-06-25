@@ -63,7 +63,14 @@ Migrations: init, add_logo_hidden, add_font_family, add_candidate_notice_salary.
 - **Dashboard** `client/dashboard/page.tsx`: forwarded candidates (stage != SHORTLISTED) grouped by job; each row shows **Fitscore x/5 ★** (NO Profile clarity). 
 - **Review page** `client/review/[candidateJobId]/page.tsx`: top bar single `flex items-center` row (back · identity name+badge+jobTitle · **Fitscore x/5 ★** · actions). NO Profile clarity. Actions (`ReviewActions.tsx`) = **Request interview** (→ REVIEW_ACCEPTED) + **Reject** (Accept merged into Request interview; client never sets SCHEDULED_INTERVIEW). **Comments** button (top bar) opens a RIGHT-SIDE `Sheet` drawer with CommentThread (moved off the bottom). PDF download present.
 
-## 12. ⭐ DEPLOYMENT PLAN (GitHub + Vercel) — the NEXT task
+## 12. ⭐ DEPLOYMENT — ✅ DONE (live on Vercel, 2026-06-25)
+**Status: deployed & sanity-checked by user.** Repo: https://github.com/RohanGondhale96/Candidate-dossier (public, branch `main`). Hosted on Vercel (account `rohangondhale-5913`), DB on **Neon Postgres** (host `ep-curly-boat-ategm5br`). Imported via Vercel dashboard with the Neon integration.
+- **What changed for deploy:** schema datasource `sqlite`→`postgresql` (`url`=DATABASE_URL pooled `&pgbouncer=true`, `directUrl`=DIRECT_DATABASE_URL unpooled); kept all String/JSON columns so ZERO app-code changes. `package.json` build=`prisma generate && next build`, added `postinstall`+`db:push`. Deleted `prisma/migrations/` (apply schema via `prisma db push`). `.gitignore` now excludes `.env`,`*.db`,`.claude/`; added `.env.example`. Vercel env: DATABASE_URL, DIRECT_DATABASE_URL, NEXTAUTH_URL(=live URL), NEXTAUTH_SECRET.
+- **DB guardrail:** Claude cannot connect/write to the remote Neon DB (non-localhost; user `neondb_owner` ∉ {claude*,cu_*}; no remote write txns). The USER ran `npm run db:push` + `npm run db:seed` locally. To reseed/update prod data later, the USER must run those (with `$env:NODE_EXTRA_CA_CERTS` set and the Neon URLs in local `.env`).
+- **Commit rules applied:** subject starts with Jira id `PRD-7847`, ends with trailer `Workflow: rh-assist`, no Co-Authored-By line.
+- **Redeploy on new code:** `git push` to `main` → Vercel auto-builds. Schema changes need a manual `npm run db:push` (by user) since build doesn't run migrations.
+
+### (historical) original plan
 Goal: shareable working URL. **Blocker: SQLite won't run on Vercel (ephemeral FS) → must move to hosted Postgres.**
 Steps (confirm choices with user first):
 1. **Provision Postgres** — Neon / Supabase / Vercel Postgres (free tier). Get `DATABASE_URL`. (User action / their account.)
