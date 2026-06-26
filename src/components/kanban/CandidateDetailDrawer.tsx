@@ -92,6 +92,7 @@ export function CandidateDetailDrawer({
   const [confirmRejectOpen, setConfirmRejectOpen] = useState(false);
   const [rejecting, setRejecting] = useState(false);
   const [jobDialogOpen, setJobDialogOpen] = useState(false);
+  const [moveOpen, setMoveOpen] = useState(false);
   const [tab, setTab] = useState<"resume" | "comments">("resume");
   const [commentCount, setCommentCount] = useState(0);
   const [downloading, setDownloading] = useState(false);
@@ -165,12 +166,12 @@ export function CandidateDetailDrawer({
       <SheetContent
         className="w-full overflow-y-auto sm:max-w-2xl lg:max-w-[960px]"
         onEscapeKeyDown={(e) => {
-          // Esc should close a nested dialog first, not the drawer underneath it.
-          if (jobDialogOpen || confirmRejectOpen) e.preventDefault();
+          // Esc should close a nested layer first, not the drawer underneath it.
+          if (jobDialogOpen || confirmRejectOpen || moveOpen) e.preventDefault();
         }}
         onInteractOutside={(e) => {
-          // Clicking/closing a nested dialog must not dismiss the drawer.
-          if (jobDialogOpen || confirmRejectOpen) e.preventDefault();
+          // Closing a nested dialog / dropdown must not dismiss the drawer.
+          if (jobDialogOpen || confirmRejectOpen || moveOpen) e.preventDefault();
         }}
       >
         {card && (
@@ -268,7 +269,7 @@ export function CandidateDetailDrawer({
 
             {/* Action toolbar */}
             <div className="mt-4 flex flex-wrap items-center gap-2">
-              <DropdownMenu>
+              <DropdownMenu open={moveOpen} onOpenChange={setMoveOpen}>
                 <DropdownMenuTrigger asChild>
                   <Button size="sm" className="gap-1.5">
                     <ArrowRightLeft className="h-4 w-4" />
@@ -312,7 +313,7 @@ export function CandidateDetailDrawer({
                 }
               >
                 <FileEdit className="h-4 w-4" />
-                Edit Resume
+                Edit Profile
               </Button>
 
               <Button
