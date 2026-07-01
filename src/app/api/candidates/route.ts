@@ -5,8 +5,11 @@ import { requireUser, jsonError, handleApiError, parseJson } from "@/lib/api";
 import { computeScores } from "@/lib/scoring";
 import { buildInitialResumeContent } from "@/lib/resume-content";
 import { toCandidateProfile } from "@/lib/candidate-job";
+import { PIPELINE_STAGES } from "@/lib/constants";
 import type { ResumeContent } from "@/types/resume";
 import type { KanbanCard, PipelineStage } from "@/types/kanban";
+
+const VALID_STAGES = new Set<string>(PIPELINE_STAGES);
 
 // GET — every candidate card for the signed-in vendor, aggregated across ALL
 // their jobs (the dossier board no longer filters by a single job). Scores are
@@ -24,7 +27,7 @@ export async function GET() {
       orderBy: { updatedAt: "desc" },
     });
 
-    const cards: KanbanCard[] = candidateJobs.map((cj) => {
+    const cards: KanbanCard[] = candidateJobs.filter((cj) => VALID_STAGES.has(cj.stage)).map((cj) => {
       const requiredSkills = parseJson<string[]>(cj.job.requiredSkills, []);
       const content: ResumeContent = cj.resume
         ? parseJson<ResumeContent>(cj.resume.content, { sections: [] })

@@ -238,7 +238,7 @@ export default function CandidatesPage() {
       ACCEPTED: [],
       NOT_A_FIT: [],
     };
-    for (const c of base) byStage[c.stage].push(c);
+    for (const c of base) byStage[c.stage]?.push(c);
     return byStage;
   }, [cards, query, jobId, noticePeriodFilter, sortBy]);
 
