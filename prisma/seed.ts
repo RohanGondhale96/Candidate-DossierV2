@@ -691,93 +691,78 @@ async function main() {
   };
 
   const cjs: CJ[] = [
-    // ── JOB 1: Senior Product Designer (Acme Bank) — vendor1 ──────────────
-    // INCOMING (5)
+    // ── JOB 1: Senior Product Designer (Acme Bank) — vendor1 ─────────────
+    // 5 INCOMING · 2 PRESENTED · 3 ACCEPTED · 2 NOT_A_FIT
     { ci: 5,  job: job1, vendorId: vendor1.id, stage: "INCOMING" },
     { ci: 11, job: job1, vendorId: vendor1.id, stage: "INCOMING" },
     { ci: 15, job: job1, vendorId: vendor1.id, stage: "INCOMING" },
     { ci: 6,  job: job1, vendorId: vendor1.id, stage: "INCOMING" },
     { ci: 8,  job: job1, vendorId: vendor1.id, stage: "INCOMING" },
-    // PRESENTED (3)
     { ci: 1,  job: job1, vendorId: vendor1.id, stage: "PRESENTED", jobMatch: 89, quality: 83, clientUserId: client1.id },
     { ci: 2,  job: job1, vendorId: vendor1.id, stage: "PRESENTED", jobMatch: 68, quality: 71, clientUserId: client1.id },
-    { ci: 16, job: job1, vendorId: vendor1.id, stage: "PRESENTED", jobMatch: 55, quality: 58, clientUserId: client1.id },
-    // ACCEPTED (2)
-    { ci: 3,  job: job1, vendorId: vendor1.id, stage: "ACCEPTED",  jobMatch: 63, quality: 74, clientUserId: client1.id },
+    { ci: 3,  job: job1, vendorId: vendor1.id, stage: "ACCEPTED",  jobMatch: 80, quality: 76, clientUserId: client1.id },
     { ci: 10, job: job1, vendorId: vendor1.id, stage: "ACCEPTED",  jobMatch: 77, quality: 70, clientUserId: client1.id },
-    // NOT_A_FIT (2)
+    { ci: 16, job: job1, vendorId: vendor1.id, stage: "ACCEPTED",  jobMatch: 62, quality: 65, clientUserId: client1.id },
     { ci: 17, job: job1, vendorId: vendor1.id, stage: "NOT_A_FIT", rejectedAtStage: "PRESENTED", jobMatch: 44, quality: 49, clientUserId: client1.id },
     { ci: 18, job: job1, vendorId: vendor1.id, stage: "NOT_A_FIT", rejectedAtStage: "INCOMING",  jobMatch: 37, quality: 41 },
 
-    // ── JOB 2: Full Stack Engineer (Acme Bank) — vendor1 + vendor2 ─────────
-    // INCOMING (5: 3 v1 + 2 v2)
+    // ── JOB 2: Full Stack Engineer (Acme Bank) — vendor1 + vendor2 ────────
+    // 4 INCOMING · 3 PRESENTED · 2 ACCEPTED · 3 NOT_A_FIT
     { ci: 0,  job: job2, vendorId: vendor1.id, stage: "INCOMING" },
     { ci: 4,  job: job2, vendorId: vendor1.id, stage: "INCOMING" },
-    { ci: 19, job: job2, vendorId: vendor1.id, stage: "INCOMING" },
     { ci: 6,  job: job2, vendorId: vendor2.id, stage: "INCOMING" },
     { ci: 17, job: job2, vendorId: vendor2.id, stage: "INCOMING" },
-    // PRESENTED (3: 2 v1 + 1 v2)
     { ci: 10, job: job2, vendorId: vendor1.id, stage: "PRESENTED", jobMatch: 81, quality: 74, clientUserId: client1.id },
     { ci: 1,  job: job2, vendorId: vendor1.id, stage: "PRESENTED", jobMatch: 67, quality: 72, clientUserId: client1.id },
     { ci: 9,  job: job2, vendorId: vendor2.id, stage: "PRESENTED", jobMatch: 74, quality: 68, clientUserId: client1.id },
-    // ACCEPTED (2: 1 v1 + 1 v2)
     { ci: 11, job: job2, vendorId: vendor1.id, stage: "ACCEPTED",  jobMatch: 85, quality: 78, clientUserId: client1.id },
     { ci: 3,  job: job2, vendorId: vendor2.id, stage: "ACCEPTED",  jobMatch: 71, quality: 73, clientUserId: client1.id },
-    // NOT_A_FIT (2: 1 v1 + 1 v2)
     { ci: 15, job: job2, vendorId: vendor1.id, stage: "NOT_A_FIT", rejectedAtStage: "PRESENTED", jobMatch: 51, quality: 56, clientUserId: client1.id },
-    { ci: 18, job: job2, vendorId: vendor2.id, stage: "NOT_A_FIT", rejectedAtStage: "INCOMING",  jobMatch: 39, quality: 44 },
+    { ci: 19, job: job2, vendorId: vendor1.id, stage: "NOT_A_FIT", rejectedAtStage: "INCOMING",  jobMatch: 40, quality: 44 },
+    { ci: 18, job: job2, vendorId: vendor2.id, stage: "NOT_A_FIT", rejectedAtStage: "PRESENTED", jobMatch: 39, quality: 46, clientUserId: client1.id },
 
     // ── JOB 3: Data Analyst (Acme Bank) — vendor2 ────────────────────────
-    // INCOMING (5)
+    // 5 INCOMING · 2 PRESENTED · 2 ACCEPTED · 3 NOT_A_FIT
     { ci: 7,  job: job3, vendorId: vendor2.id, stage: "INCOMING" },
     { ci: 8,  job: job3, vendorId: vendor2.id, stage: "INCOMING" },
     { ci: 12, job: job3, vendorId: vendor2.id, stage: "INCOMING" },
     { ci: 17, job: job3, vendorId: vendor2.id, stage: "INCOMING" },
     { ci: 19, job: job3, vendorId: vendor2.id, stage: "INCOMING" },
-    // PRESENTED (3)
-    { ci: 3,  job: job3, vendorId: vendor2.id, stage: "PRESENTED", jobMatch: 86, quality: 79, clientUserId: client1.id },
-    { ci: 13, job: job3, vendorId: vendor2.id, stage: "PRESENTED", jobMatch: 78, quality: 75, clientUserId: client1.id },
+    { ci: 13, job: job3, vendorId: vendor2.id, stage: "PRESENTED", jobMatch: 84, quality: 78, clientUserId: client1.id },
     { ci: 4,  job: job3, vendorId: vendor2.id, stage: "PRESENTED", jobMatch: 61, quality: 64, clientUserId: client1.id },
-    // ACCEPTED (2)
     { ci: 14, job: job3, vendorId: vendor2.id, stage: "ACCEPTED",  jobMatch: 74, quality: 77, clientUserId: client1.id },
     { ci: 0,  job: job3, vendorId: vendor2.id, stage: "ACCEPTED",  jobMatch: 60, quality: 67, clientUserId: client1.id },
-    // NOT_A_FIT (2)
     { ci: 16, job: job3, vendorId: vendor2.id, stage: "NOT_A_FIT", rejectedAtStage: "PRESENTED", jobMatch: 47, quality: 52, clientUserId: client1.id },
     { ci: 1,  job: job3, vendorId: vendor2.id, stage: "NOT_A_FIT", rejectedAtStage: "INCOMING",  jobMatch: 38, quality: 43 },
+    { ci: 3,  job: job3, vendorId: vendor2.id, stage: "NOT_A_FIT", rejectedAtStage: "PRESENTED", jobMatch: 55, quality: 59, clientUserId: client1.id },
 
-    // ── JOB 4: DevOps Engineer (Globex Securities) — vendor1 ──────────────
-    // INCOMING (5)
+    // ── JOB 4: DevOps Engineer (Globex Securities) — vendor1 ─────────────
+    // 4 INCOMING · 3 PRESENTED · 3 ACCEPTED · 2 NOT_A_FIT
     { ci: 8,  job: job4, vendorId: vendor1.id, stage: "INCOMING" },
     { ci: 18, job: job4, vendorId: vendor1.id, stage: "INCOMING" },
-    { ci: 16, job: job4, vendorId: vendor1.id, stage: "INCOMING" },
     { ci: 15, job: job4, vendorId: vendor1.id, stage: "INCOMING" },
     { ci: 6,  job: job4, vendorId: vendor1.id, stage: "INCOMING" },
-    // PRESENTED (3)
     { ci: 2,  job: job4, vendorId: vendor1.id, stage: "PRESENTED", jobMatch: 91, quality: 84, clientUserId: client2.id },
     { ci: 13, job: job4, vendorId: vendor1.id, stage: "PRESENTED", jobMatch: 79, quality: 76, clientUserId: client2.id },
     { ci: 10, job: job4, vendorId: vendor1.id, stage: "PRESENTED", jobMatch: 63, quality: 67, clientUserId: client2.id },
-    // ACCEPTED (2)
     { ci: 0,  job: job4, vendorId: vendor1.id, stage: "ACCEPTED",  jobMatch: 76, quality: 80, clientUserId: client2.id },
     { ci: 4,  job: job4, vendorId: vendor1.id, stage: "ACCEPTED",  jobMatch: 69, quality: 73, clientUserId: client2.id },
-    // NOT_A_FIT (2)
+    { ci: 11, job: job4, vendorId: vendor1.id, stage: "ACCEPTED",  jobMatch: 72, quality: 75, clientUserId: client2.id },
     { ci: 19, job: job4, vendorId: vendor1.id, stage: "NOT_A_FIT", rejectedAtStage: "PRESENTED", jobMatch: 46, quality: 50, clientUserId: client2.id },
     { ci: 7,  job: job4, vendorId: vendor1.id, stage: "NOT_A_FIT", rejectedAtStage: "INCOMING",  jobMatch: 41, quality: 45 },
 
-    // ── JOB 5: Backend Engineer (Globex Securities) — vendor2 ─────────────
-    // INCOMING (5)
+    // ── JOB 5: Backend Engineer (Globex Securities) — vendor2 ────────────
+    // 5 INCOMING · 3 PRESENTED · 2 ACCEPTED · 2 NOT_A_FIT
     { ci: 19, job: job5, vendorId: vendor2.id, stage: "INCOMING" },
     { ci: 14, job: job5, vendorId: vendor2.id, stage: "INCOMING" },
     { ci: 12, job: job5, vendorId: vendor2.id, stage: "INCOMING" },
     { ci: 16, job: job5, vendorId: vendor2.id, stage: "INCOMING" },
     { ci: 7,  job: job5, vendorId: vendor2.id, stage: "INCOMING" },
-    // PRESENTED (3)
     { ci: 4,  job: job5, vendorId: vendor2.id, stage: "PRESENTED", jobMatch: 88, quality: 81, clientUserId: client2.id },
     { ci: 9,  job: job5, vendorId: vendor2.id, stage: "PRESENTED", jobMatch: 83, quality: 77, clientUserId: client2.id },
-    { ci: 3,  job: job5, vendorId: vendor2.id, stage: "PRESENTED", jobMatch: 70, quality: 72, clientUserId: client2.id },
-    // ACCEPTED (2)
+    { ci: 5,  job: job5, vendorId: vendor2.id, stage: "PRESENTED", jobMatch: 70, quality: 72, clientUserId: client2.id },
     { ci: 0,  job: job5, vendorId: vendor2.id, stage: "ACCEPTED",  jobMatch: 77, quality: 79, clientUserId: client2.id },
-    { ci: 5,  job: job5, vendorId: vendor2.id, stage: "ACCEPTED",  jobMatch: 64, quality: 68, clientUserId: client2.id },
-    // NOT_A_FIT (2)
+    { ci: 6,  job: job5, vendorId: vendor2.id, stage: "ACCEPTED",  jobMatch: 64, quality: 68, clientUserId: client2.id },
     { ci: 8,  job: job5, vendorId: vendor2.id, stage: "NOT_A_FIT", rejectedAtStage: "PRESENTED", jobMatch: 52, quality: 57, clientUserId: client2.id },
     { ci: 15, job: job5, vendorId: vendor2.id, stage: "NOT_A_FIT", rejectedAtStage: "INCOMING",  jobMatch: 43, quality: 48 },
   ];
