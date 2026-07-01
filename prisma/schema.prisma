@@ -1,19 +1,9 @@
-// Candidate Dossier — Prisma schema (v2 — LOCAL SQLite, no cloud DB)
-// v2 is a local-only sandbox. It uses SQLite so the whole stack runs offline
-// and schema changes stay isolated from production (v1 / Neon).
-// SQLite-era column shapes (kept identical to v1 so the data layer is unchanged):
-//   - enums (UserRole, PipelineStage) are String, validated by constants in
-//     src/lib/constants.ts
-//   - String[] arrays (skills, requiredSkills) are stored as JSON strings
-//   - structured Json (experience, education, certifications, resume content)
-//     is stored as JSON strings and (de)serialized in the data layer (lib/api.ts)
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
