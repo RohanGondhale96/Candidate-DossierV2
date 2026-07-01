@@ -34,25 +34,6 @@ const PIPELINE_LABELS: { key: keyof PipelineCounts; label: string; color: string
 
 // ─── Sub-components ──────────────────────────────────────────────────────────
 
-function StatusPill({ status }: { status: "ACTIVE" | "PAUSED" }) {
-  const isActive = status === "ACTIVE";
-  return (
-    <span
-      className={cn(
-        "inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-[11px] font-semibold uppercase tracking-[0.04em]",
-        isActive
-          ? "bg-[#EAF3DE] text-[#3B6D11]"
-          : "bg-[#FAEEDA] text-[#854F0B]"
-      )}
-    >
-      <span
-        className="h-1.5 w-1.5 rounded-full"
-        style={{ background: isActive ? "#639922" : "#EF9F27" }}
-      />
-      {isActive ? "Active" : "Paused"}
-    </span>
-  );
-}
 
 function PipelineGrid({ pipeline }: { pipeline: PipelineCounts }) {
   return (

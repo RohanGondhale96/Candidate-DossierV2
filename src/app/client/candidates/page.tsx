@@ -150,7 +150,7 @@ function ClientCandidateCard({
       {/* Full-width recruiter note */}
       {(card.candidateSummary || card.recruiterNotes) && (
         <p className="mt-2 line-clamp-2 border-t border-[#F3F4F6] pt-2 text-[13px] italic leading-relaxed text-[#4B5563]">
-          "{card.candidateSummary || card.recruiterNotes}"
+          &ldquo;{card.candidateSummary || card.recruiterNotes}&rdquo;
         </p>
       )}
     </div>

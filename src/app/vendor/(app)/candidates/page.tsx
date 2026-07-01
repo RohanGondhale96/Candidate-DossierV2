@@ -301,9 +301,6 @@ export default function CandidatesPage() {
 
   const activeFilterCount = [noticePeriodFilter, sortBy].filter(Boolean).length;
 
-  const totalCount = jobId
-    ? Object.values(filtered).flat().length
-    : cards.length;
 
   // Find the job title for the active filter
   const filteredJobTitle = jobId

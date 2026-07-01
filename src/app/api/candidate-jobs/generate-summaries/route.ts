@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
 import { prisma } from "@/lib/prisma";
-import { requireUser, jsonError, handleApiError, parseJson } from "@/lib/api";
+import { requireUser, jsonError, handleApiError } from "@/lib/api";
 
 const bodySchema = z.object({
   candidateJobIds: z.array(z.string()).min(1).max(20),
