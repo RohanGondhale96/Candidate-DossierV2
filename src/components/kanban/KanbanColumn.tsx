@@ -13,6 +13,7 @@ export function KanbanColumn({
   dragging,
   isValidTarget,
   onReject,
+  onShare,
   onOpen,
 }: {
   stage: PipelineStage;
@@ -21,6 +22,7 @@ export function KanbanColumn({
   dragging: boolean;
   isValidTarget: boolean;
   onReject: (id: string) => Promise<void> | void;
+  onShare?: (card: KanbanCard) => void;
   onOpen: (card: KanbanCard) => void;
 }) {
   const { setNodeRef, isOver } = useDroppable({ id: stage });
@@ -52,6 +54,7 @@ export function KanbanColumn({
             key={card.candidateJobId}
             card={card}
             onReject={onReject}
+            onShare={onShare}
             onOpen={onOpen}
           />
         ))}

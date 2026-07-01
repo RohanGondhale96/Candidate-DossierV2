@@ -1,25 +1,20 @@
-// Candidate Dossier — Prisma schema
-// Originally built on SQLite (local dev); now PostgreSQL (Neon) for deployment.
-// To keep the data layer unchanged across the move, we intentionally KEEP the
-// SQLite-era column shapes rather than restoring native Postgres types:
+// Candidate Dossier — Prisma schema (v2 — LOCAL SQLite, no cloud DB)
+// v2 is a local-only sandbox. It uses SQLite so the whole stack runs offline
+// and schema changes stay isolated from production (v1 / Neon).
+// SQLite-era column shapes (kept identical to v1 so the data layer is unchanged):
 //   - enums (UserRole, PipelineStage) are String, validated by constants in
 //     src/lib/constants.ts
 //   - String[] arrays (skills, requiredSkills) are stored as JSON strings
 //   - structured Json (experience, education, certifications, resume content)
 //     is stored as JSON strings and (de)serialized in the data layer (lib/api.ts)
-// This means zero application-code changes were needed to switch providers.
-//
-// DATABASE_URL      = pooled connection (used at runtime by the app)
-// DIRECT_DATABASE_URL = direct/unpooled connection (used by migrate / db push)
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_DATABASE_URL")
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
 }
 
 // ─── AUTH & USERS ────────────────────────────────────
@@ -66,6 +61,7 @@ model Job {
   location       String?
   salaryRange    String?
   openPositions  Int      @default(1)
+  status         String   @default("ACTIVE") // "ACTIVE" | "PAUSED"
   clientId       String
   client         Organization @relation("ClientJobs", fields: [clientId], references: [id])
   createdAt      DateTime @default(now())
@@ -124,13 +120,17 @@ model CandidateJob {
   job             Job       @relation(fields: [jobId], references: [id])
   vendorUserId    String
   vendor          User      @relation("VendorCandidateJobs", fields: [vendorUserId], references: [id])
-  stage           String  @default("SHORTLISTED") // PipelineStage
-  rejectedAtStage String? // PipelineStage the candidate was rejected from
-  recruiterNotes  String?
+  stage            String  @default("INCOMING") // PipelineStage
+  rejectedAtStage  String? // PipelineStage the candidate was in when marked not a fit
+  notAFitReason    String? // Reason selected when marking as not a fit
+  recruiterNotes   String?
+  candidateSummary String? // Client-facing note added when sharing with client
 
   resume         ResumeData?
   resumeVersions ResumeVersion[]
   comments       Comment[]
+
+  vendorLastReadAt DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

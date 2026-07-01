@@ -12,6 +12,7 @@ export type { PipelineStage } from "@/lib/constants";
 export interface KanbanCard {
   candidateJobId: string;
   candidateId: string;
+  jobId: string;
   name: string;
   title: string | null;
   jobTitle: string;
@@ -24,5 +25,7 @@ export interface KanbanCard {
   rejectedAtStage: PipelineStage | null;
   jobMatchScore: number | null;
   qualityScore: number | null;
+  recruiterNotes: string | null;
+  candidateSummary: string | null;
   vendorName: string;
 }

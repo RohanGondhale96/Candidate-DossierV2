@@ -1,5 +1,5 @@
 // Idempotent "extra demo candidates" augmentation.
-// Adds, per job: 2 SHORTLISTED + 1 IN_REVIEW + 1 REVIEW_ACCEPTED + 1 ACCEPTED candidates
+// Adds, per job: 2 INCOMING + 1 PRESENTED + 1 ACCEPTED candidates
 // (role-appropriate, assigned to the vendor that owns the job). Re-runnable:
 // candidates keyed by RH-AUG-* rippleHireId and skipped if already present.
 //
@@ -14,15 +14,14 @@ import type { CandidateProfile } from "../src/types/candidate";
 
 const j = (v: unknown) => JSON.stringify(v);
 
-type Stage = "SHORTLISTED" | "IN_REVIEW" | "REVIEW_ACCEPTED" | "ACCEPTED";
+type Stage = "INCOMING" | "PRESENTED" | "ACCEPTED";
 
-// stage + placeholder scores for the 5 additions per job
+// stage + placeholder scores for the 4 additions per job
 const SLOTS: { stage: Stage; jobMatch: number | null; quality: number | null }[] =
   [
-    { stage: "SHORTLISTED", jobMatch: null, quality: null },
-    { stage: "SHORTLISTED", jobMatch: null, quality: null },
-    { stage: "IN_REVIEW", jobMatch: 72, quality: 69 },
-    { stage: "REVIEW_ACCEPTED", jobMatch: 84, quality: 80 },
+    { stage: "INCOMING", jobMatch: null, quality: null },
+    { stage: "INCOMING", jobMatch: null, quality: null },
+    { stage: "PRESENTED", jobMatch: 72, quality: 69 },
     { stage: "ACCEPTED", jobMatch: 78, quality: 83 },
   ];
 
@@ -117,11 +116,11 @@ function certFor(role: RoleSpec): {
 }
 
 const NOTICE_PERIODS = [
-  "Immediate",
-  "Within 15 days",
-  "Within 30 days",
-  "30–60 days",
-  "Serving notice (90 days)",
+  "Can join immediately",
+  "Serving notice period",
+  "1 month",
+  "2 months",
+  "3 months",
 ];
 function salaryRange(years: number): string {
   const low = Math.round(5 + years * 1.4);
@@ -145,7 +144,7 @@ export async function augment(prisma: PrismaClient) {
       const [first, last] = role.names[i];
       const rid = `RH-AUG-${r + 1}${i + 1}`; // stable, unique per role+slot
       const years = 3 + ((r + i) % 8);
-      const hasResume = slot.stage !== "SHORTLISTED";
+      const hasResume = slot.stage !== "INCOMING";
 
       // Upsert candidate by rippleHireId
       let candidate = await prisma.candidate.findUnique({

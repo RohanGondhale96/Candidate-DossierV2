@@ -88,7 +88,7 @@ export function SendToClientButton() {
   const done = revealed >= checklist.length;
   const missingCount = checklist.filter((c) => !c.ok).length;
 
-  const alreadySent = stage !== "SHORTLISTED";
+  const alreadySent = stage !== "INCOMING";
 
   // Staggered "checking…" reveal each time the modal opens.
   useEffect(() => {
@@ -120,7 +120,7 @@ export function SendToClientButton() {
         const err = await res.json().catch(() => ({}));
         throw new Error(err.error ?? "Failed to send");
       }
-      setStage("IN_REVIEW");
+      setStage("PRESENTED");
       toast.success("Profile sent to client for review");
       setOpen(false);
     } catch (e) {

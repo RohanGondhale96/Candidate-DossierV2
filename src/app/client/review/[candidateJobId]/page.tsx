@@ -1,20 +1,18 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   ArrowLeft,
   Loader2,
   AlertCircle,
   Download,
-  Star,
   MessageSquare,
+  Pencil,
 } from "lucide-react";
 import { toast } from "sonner";
 
 import { useResumeStore, type ResumeServerData } from "@/stores/resumeStore";
-import { computeScores } from "@/lib/scoring";
-import { fitStars } from "@/lib/candidate-ui";
 import { exportResumeToPdf } from "@/lib/pdf";
 import type { PipelineStage } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
@@ -37,25 +35,16 @@ export default function ClientReviewPage({
 }) {
   const initFromServer = useResumeStore((s) => s.initFromServer);
   const initialized = useResumeStore((s) => s.initialized);
-  const content = useResumeStore((s) => s.content);
-  const jobRequiredSkills = useResumeStore((s) => s.jobRequiredSkills);
-  const jobRequirements = useResumeStore((s) => s.jobRequirements);
 
-  const scores = useMemo(
-    () => computeScores(content, jobRequiredSkills, jobRequirements),
-    [content, jobRequiredSkills, jobRequirements]
-  );
-
-  const [status, setStatus] = useState<"loading" | "ready" | "error">(
-    "loading"
-  );
+  const [status, setStatus] = useState<"loading" | "ready" | "error">("loading");
   const [errorMsg, setErrorMsg] = useState("");
   const [meta, setMeta] = useState<{
     candidateName: string;
     jobTitle: string;
     clientName: string;
   } | null>(null);
-  const [stage, setStage] = useState<PipelineStage>("IN_REVIEW");
+  const [stage, setStage] = useState<PipelineStage>("PRESENTED");
+  const [recruiterNote, setRecruiterNote] = useState<string | null>(null);
   const [exporting, setExporting] = useState(false);
   const [commentsOpen, setCommentsOpen] = useState(false);
 
@@ -90,6 +79,7 @@ export default function ClientReviewPage({
           clientName: data.clientName,
         });
         setStage(data.stage);
+        setRecruiterNote(data.candidateSummary || data.recruiterNotes || null);
         setStatus("ready");
       } catch (e) {
         if (cancelled) return;
@@ -118,7 +108,7 @@ export default function ClientReviewPage({
         <h1 className="text-lg font-semibold">Could not load candidate</h1>
         <p className="mt-1 text-sm text-muted-foreground">{errorMsg}</p>
         <Link
-          href="/client/dashboard"
+          href="/client/candidates"
           className="mt-4 text-sm text-primary hover:underline"
         >
           ← Back to candidates
@@ -133,7 +123,7 @@ export default function ClientReviewPage({
       <div className="sticky top-0 z-10 border-b bg-white">
         <div className="mx-auto flex max-w-5xl items-center gap-3 px-6 py-3">
           <Link
-            href="/client/dashboard"
+            href="/client/candidates"
             className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-gray-500 transition-colors hover:bg-gray-100"
             title="Back to candidates"
           >
@@ -152,39 +142,29 @@ export default function ClientReviewPage({
             </div>
           </div>
 
-          {initialized && (
-            <div className="hidden shrink-0 items-center gap-1.5 sm:flex">
-              <span className="text-xs text-muted-foreground">Fitscore</span>
-              <span className="text-sm font-semibold tabular-nums text-gray-900">
-                {fitStars(scores.jobMatchScore)}/5
-              </span>
-              <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
-            </div>
-          )}
-
           <div className="flex shrink-0 items-center gap-2">
             <Button
               size="sm"
               variant="outline"
               onClick={() => setCommentsOpen(true)}
-              className="gap-1.5"
+              title="Add comment"
+              className="h-8 w-8 p-0"
             >
               <MessageSquare className="h-4 w-4" />
-              Comments
             </Button>
             <Button
               size="sm"
               variant="outline"
               onClick={handleExport}
               disabled={exporting || !initialized}
-              className="gap-1.5"
+              title="Download profile"
+              className="h-8 w-8 p-0"
             >
               {exporting ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
               ) : (
                 <Download className="h-4 w-4" />
               )}
-              PDF
             </Button>
             {initialized && (
               <ReviewActions
@@ -197,6 +177,23 @@ export default function ClientReviewPage({
           </div>
         </div>
       </div>
+
+      {/* Recruiter note — shown above the resume when present */}
+      {recruiterNote && (
+        <div className="mx-auto max-w-[816px] px-6 pt-6">
+          <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
+            <div className="mb-2 flex items-center gap-1.5">
+              <Pencil className="h-3 w-3 text-gray-400" aria-hidden="true" />
+              <span className="text-[11px] font-medium uppercase tracking-widest text-gray-400">
+                Recruiter note
+              </span>
+            </div>
+            <p className="whitespace-pre-wrap text-[13px] italic leading-relaxed text-gray-600">
+              {recruiterNote}
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Read-only resume */}
       <div className="pb-12">

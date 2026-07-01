@@ -7,7 +7,7 @@ interface Params {
   params: { candidateJobId: string };
 }
 
-// POST — send polished profile for client review (moves to IN_REVIEW)
+// POST — send polished profile for client review (moves INCOMING → PRESENTED)
 export async function POST(_req: NextRequest, { params }: Params) {
   try {
     const auth = await requireUser("VENDOR");
@@ -23,15 +23,15 @@ export async function POST(_req: NextRequest, { params }: Params) {
     if (!cj.resume)
       return jsonError("Save the resume before sending to client", 400);
 
-    // Only meaningful from SHORTLISTED; if already sent or beyond, no-op success.
-    if (cj.stage === "SHORTLISTED") {
+    // Only meaningful from INCOMING; if already presented or beyond, no-op success.
+    if (cj.stage === "INCOMING") {
       await prisma.candidateJob.update({
         where: { id: params.candidateJobId },
-        data: { stage: "IN_REVIEW" },
+        data: { stage: "PRESENTED" },
       });
     }
 
-    return NextResponse.json({ success: true, stage: "IN_REVIEW" });
+    return NextResponse.json({ success: true, stage: "PRESENTED" });
   } catch (error) {
     return handleApiError(error);
   }

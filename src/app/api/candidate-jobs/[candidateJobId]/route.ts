@@ -12,6 +12,7 @@ interface Params {
 
 const patchSchema = z.object({
   stage: z.string().refine(isValidStage, "Invalid stage"),
+  notAFitReason: z.string().optional(),
 });
 
 // PATCH — move a candidate to a new pipeline stage (enforces valid transitions).
@@ -34,7 +35,7 @@ export async function PATCH(req: NextRequest, { params }: Params) {
       return jsonError("Forbidden", 403);
     }
 
-    const { stage: newStage } = patchSchema.parse(await req.json());
+    const { stage: newStage, notAFitReason } = patchSchema.parse(await req.json());
     const current = cj.stage as PipelineStage;
 
     if (newStage === current) {
@@ -48,12 +49,12 @@ export async function PATCH(req: NextRequest, { params }: Params) {
       );
     }
 
-    // Track where a rejection happened; clear it when recovering from Rejected.
-    let rejectedAtStageUpdate: { rejectedAtStage?: string | null } = {};
-    if (newStage === "REJECTED") {
-      rejectedAtStageUpdate = { rejectedAtStage: current };
-    } else if (current === "REJECTED") {
-      rejectedAtStageUpdate = { rejectedAtStage: null };
+    // Track which stage the candidate was in when marked not a fit.
+    let rejectedAtStageUpdate: { rejectedAtStage?: string | null; notAFitReason?: string | null } = {};
+    if (newStage === "NOT_A_FIT") {
+      rejectedAtStageUpdate = { rejectedAtStage: current, notAFitReason: notAFitReason ?? null };
+    } else if (current === "NOT_A_FIT") {
+      rejectedAtStageUpdate = { rejectedAtStage: null, notAFitReason: null };
     }
 
     const updated = await prisma.candidateJob.update({

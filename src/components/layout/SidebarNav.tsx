@@ -2,7 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { LayoutDashboard, KanbanSquare, Eye, type LucideIcon } from "lucide-react";
+import {
+  LayoutDashboard,
+  KanbanSquare,
+  Eye,
+  Briefcase,
+  Users,
+  type LucideIcon,
+} from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
@@ -10,6 +17,8 @@ const ICONS = {
   dashboard: LayoutDashboard,
   kanban: KanbanSquare,
   review: Eye,
+  briefcase: Briefcase,
+  users: Users,
 } satisfies Record<string, LucideIcon>;
 
 export type NavIconName = keyof typeof ICONS;

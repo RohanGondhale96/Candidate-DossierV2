@@ -1,19 +1,13 @@
 "use client";
 
 import { useDraggable } from "@dnd-kit/core";
-import {
-  MapPin,
-  Briefcase,
-  CalendarClock,
-  IndianRupee,
-  Star,
-} from "lucide-react";
+import { MapPin, Briefcase, CalendarClock } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import { clarityColor } from "@/lib/candidate-ui";
 import { StatusBadge } from "@/components/client-review/StatusBadge";
 import type { KanbanCard } from "@/types/kanban";
 import { CardKebabMenu } from "./CardKebabMenu";
-import { clarityColor, fitStars } from "@/lib/candidate-ui";
 
 function Meta({
   icon: Icon,
@@ -34,10 +28,12 @@ function Meta({
 export function CandidateCardView({
   card,
   onReject,
+  onShare,
   dragging,
 }: {
   card: KanbanCard;
   onReject?: (id: string) => Promise<void> | void;
+  onShare?: (card: KanbanCard) => void;
   dragging?: boolean;
 }) {
   const top = card.skills.slice(0, 4);
@@ -64,7 +60,7 @@ export function CandidateCardView({
         </div>
         <div className="flex shrink-0 items-center gap-1">
           <StatusBadge stage={card.stage} />
-          {onReject && <CardKebabMenu card={card} onReject={onReject} />}
+          {onReject && <CardKebabMenu card={card} onReject={onReject} onShare={onShare} />}
         </div>
       </div>
 
@@ -75,11 +71,11 @@ export function CandidateCardView({
           {card.yearsOfExperience != null ? `${card.yearsOfExperience} yrs` : "—"}
         </Meta>
         <Meta icon={CalendarClock}>{card.noticePeriod ?? "—"}</Meta>
-        <Meta icon={IndianRupee}>{card.expectedSalary ?? "—"}</Meta>
       </div>
 
       {/* Skills */}
-      <div className="flex flex-wrap items-center gap-1.5 px-4 pt-3">
+      <div className="flex flex-wrap items-center gap-1.5 px-4 pt-3"
+           style={{ paddingBottom: card.qualityScore != null ? "0.75rem" : "1rem" }}>
         {top.map((s) => (
           <span
             key={s}
@@ -98,25 +94,18 @@ export function CandidateCardView({
         )}
       </div>
 
-      {/* Footer: Fitscore (stars) + Profile clarity (%) */}
-      <div className="mt-3.5 flex items-center justify-between border-t bg-muted/40 px-4 py-2.5">
-        <div className="flex items-center gap-1.5">
-          <span className="text-xs text-muted-foreground">Fitscore</span>
-          <span className="text-[13px] font-semibold tabular-nums text-gray-900">
-            {fitStars(card.jobMatchScore)}/5
-          </span>
-          <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
-        </div>
-        <div className="flex items-center gap-1.5">
-          <span className="text-xs text-muted-foreground">Profile clarity</span>
+      {/* Profile clarity score */}
+      {card.qualityScore != null && (
+        <div className="flex items-center justify-between border-t px-4 py-2">
+          <span className="text-[11px] text-muted-foreground">Profile Clarity</span>
           <span
-            className="text-[13px] font-semibold tabular-nums"
+            className="text-[11px] font-semibold"
             style={{ color: clarityColor(card.qualityScore) }}
           >
-            {card.qualityScore != null ? `${card.qualityScore}%` : "—"}
+            {Math.round(card.qualityScore)}%
           </span>
         </div>
-      </div>
+      )}
     </div>
   );
 }
@@ -124,10 +113,12 @@ export function CandidateCardView({
 export function CandidateCard({
   card,
   onReject,
+  onShare,
   onOpen,
 }: {
   card: KanbanCard;
   onReject: (id: string) => Promise<void> | void;
+  onShare?: (card: KanbanCard) => void;
   onOpen: (card: KanbanCard) => void;
 }) {
   const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
@@ -146,7 +137,7 @@ export function CandidateCard({
         isDragging && "opacity-40"
       )}
     >
-      <CandidateCardView card={card} onReject={onReject} />
+      <CandidateCardView card={card} onReject={onReject} onShare={onShare} />
     </div>
   );
 }

@@ -4,13 +4,11 @@ import { useEffect, useState } from "react";
 import {
   Loader2,
   FileEdit,
-  CalendarPlus,
   XCircle,
   ChevronDown,
   ArrowRightLeft,
   Briefcase,
   Info,
-  Star,
   MapPin,
   CalendarClock,
   IndianRupee,
@@ -53,7 +51,7 @@ import {
   type PipelineStage,
 } from "@/lib/constants";
 import { cn } from "@/lib/utils";
-import { initials, clarityColor, fitStars } from "@/lib/candidate-ui";
+import { initials, clarityColor } from "@/lib/candidate-ui";
 import { exportResumeToPdf } from "@/lib/pdf";
 import type { KanbanCard } from "@/types/kanban";
 
@@ -77,24 +75,29 @@ export function CandidateDetailDrawer({
   open,
   onClose,
   onStageChange,
+  initialTab = "resume",
 }: {
   card: KanbanCard | null;
   open: boolean;
   onClose: () => void;
   onStageChange: (
     candidateJobId: string,
-    newStage: PipelineStage
+    newStage: PipelineStage,
+    notAFitReason?: string
   ) => void | Promise<void>;
+  initialTab?: "resume" | "comments";
 }) {
   const [loading, setLoading] = useState(false);
   const [resumeReady, setResumeReady] = useState(false);
   const [stage, setStage] = useState<PipelineStage | null>(card?.stage ?? null);
   const [confirmRejectOpen, setConfirmRejectOpen] = useState(false);
   const [rejecting, setRejecting] = useState(false);
+  const [notAFitReason, setNotAFitReason] = useState("");
   const [jobDialogOpen, setJobDialogOpen] = useState(false);
   const [moveOpen, setMoveOpen] = useState(false);
-  const [tab, setTab] = useState<"resume" | "comments">("resume");
+  const [tab, setTab] = useState<"resume" | "comments">(initialTab);
   const [commentCount, setCommentCount] = useState(0);
+  const [unreadCount, setUnreadCount] = useState(0);
   const [downloading, setDownloading] = useState(false);
 
   // Job context (populated by initFromServer once the resume loads).
@@ -103,9 +106,44 @@ export function CandidateDetailDrawer({
   // Keep local state in sync whenever a (possibly different) card is shown.
   useEffect(() => {
     setStage(card?.stage ?? null);
-    setTab("resume");
+    setTab(initialTab);
     setCommentCount(0);
-  }, [card]);
+    setUnreadCount(0);
+  }, [card, initialTab]);
+
+  // Fetch unread comment count when drawer opens; mark as read immediately if
+  // the drawer opened directly on the comments tab (e.g. from a notification).
+  useEffect(() => {
+    if (!open || !card) return;
+    fetch(`/api/notifications?candidateJobId=${card.candidateJobId}`)
+      .then((r) => r.json())
+      .then((d) => {
+        const item = d.items?.find(
+          (i: { candidateJobId: string; unreadCount: number }) =>
+            i.candidateJobId === card.candidateJobId
+        );
+        const count = item?.unreadCount ?? 0;
+        setUnreadCount(count);
+        if (tab === "comments" && count > 0) {
+          fetch(`/api/candidate-jobs/${card.candidateJobId}/mark-comments-read`, {
+            method: "POST",
+          }).catch(() => {});
+          setUnreadCount(0);
+        }
+      })
+      .catch(() => {});
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, card]);
+
+  function handleTabChange(t: "resume" | "comments") {
+    setTab(t);
+    if (t === "comments" && card && unreadCount > 0) {
+      fetch(`/api/candidate-jobs/${card.candidateJobId}/mark-comments-read`, {
+        method: "POST",
+      }).catch(() => {});
+      setUnreadCount(0);
+    }
+  }
 
   // Re-fetch + re-init the global resume store each time the drawer opens for
   // a candidate (the store is a singleton shared with the builder page).
@@ -138,13 +176,14 @@ export function CandidateDetailDrawer({
   }
 
   async function confirmReject() {
-    if (!card) return;
+    if (!card || !notAFitReason) return;
     setRejecting(true);
     try {
-      setStage("REJECTED");
-      await onStageChange(card.candidateJobId, "REJECTED");
-      toast.success("Candidate rejected");
+      setStage("NOT_A_FIT");
+      await onStageChange(card.candidateJobId, "NOT_A_FIT", notAFitReason);
+      toast.success("Marked as not a fit");
       setConfirmRejectOpen(false);
+      setNotAFitReason("");
     } finally {
       setRejecting(false);
     }
@@ -190,29 +229,15 @@ export function CandidateDetailDrawer({
                   </div>
                 </div>
 
-                {/* Scores: Fitscore (stars) + Profile clarity (%) */}
-                <div className="flex items-center gap-6 rounded-xl border bg-card px-4 py-3">
+                {/* Profile clarity score */}
+                <div className="flex items-center rounded-xl border bg-card px-4 py-3">
                   <div>
-                    <div className="text-xs text-muted-foreground">Fitscore</div>
-                    <div className="mt-0.5 flex items-center gap-1">
-                      <span className="text-lg font-semibold tabular-nums text-gray-900">
-                        {fitStars(card.jobMatchScore)}/5
-                      </span>
-                      <Star className="h-4 w-4 fill-amber-400 text-amber-400" />
-                    </div>
-                  </div>
-                  <div className="h-9 w-px bg-border" />
-                  <div>
-                    <div className="text-xs text-muted-foreground">
-                      Profile clarity
-                    </div>
+                    <div className="text-xs text-muted-foreground">Profile clarity</div>
                     <div
                       className="mt-0.5 text-lg font-semibold tabular-nums"
                       style={{ color: clarityColor(card.qualityScore) }}
                     >
-                      {card.qualityScore != null
-                        ? `${card.qualityScore}%`
-                        : "—"}
+                      {card.qualityScore != null ? `${card.qualityScore}%` : "—"}
                     </div>
                   </div>
                 </div>
@@ -278,9 +303,9 @@ export function CandidateDetailDrawer({
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="start" className="w-56">
-                  <DropdownMenuLabel>Move to round</DropdownMenuLabel>
+                  <DropdownMenuLabel>Move to</DropdownMenuLabel>
                   {PIPELINE_COLUMNS.filter(
-                    (c) => c.stage !== stage && c.stage !== "REJECTED"
+                    (c) => c.stage !== stage && c.stage !== "NOT_A_FIT"
                   ).map((c) => (
                     <DropdownMenuItem
                       key={c.stage}
@@ -295,7 +320,7 @@ export function CandidateDetailDrawer({
                     className="text-destructive focus:text-destructive"
                   >
                     <XCircle className="h-4 w-4" />
-                    Reject candidate
+                    Not a Fit
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -316,15 +341,6 @@ export function CandidateDetailDrawer({
                 Edit Profile
               </Button>
 
-              <Button
-                variant="outline"
-                size="sm"
-                className="gap-1.5"
-                onClick={() => toast("Interview scheduling is coming soon")}
-              >
-                <CalendarPlus className="h-4 w-4" />
-                Schedule Interview
-              </Button>
             </div>
 
             {/* Tabs */}
@@ -339,9 +355,9 @@ export function CandidateDetailDrawer({
                   type="button"
                   role="tab"
                   aria-selected={tab === t}
-                  onClick={() => setTab(t)}
+                  onClick={() => handleTabChange(t)}
                   className={cn(
-                    "relative -mb-px border-b-2 px-1 pb-2.5 text-sm font-medium transition-colors",
+                    "relative -mb-px flex items-center gap-1.5 border-b-2 px-1 pb-2.5 text-sm font-medium transition-colors",
                     tab === t
                       ? "border-primary text-foreground"
                       : "border-transparent text-muted-foreground hover:text-foreground"
@@ -350,22 +366,41 @@ export function CandidateDetailDrawer({
                   {t === "resume"
                     ? "Profile"
                     : `Comments${commentCount ? ` (${commentCount})` : ""}`}
+                  {t === "comments" && unreadCount > 0 && (
+                    <span className="h-2 w-2 rounded-full bg-red-500" />
+                  )}
                 </button>
               ))}
+
+              {/* Download icon — right-aligned in the tab bar, only on Profile tab */}
+              {tab === "resume" && resumeReady && (
+                <button
+                  onClick={handleDownload}
+                  disabled={downloading}
+                  title="Download profile"
+                  className="ml-auto mb-1 flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:opacity-40"
+                >
+                  {downloading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    <Download className="h-4 w-4" />
+                  )}
+                </button>
+              )}
             </div>
 
             <div className="mt-4">
               {/* Comments stay mounted (hidden) so the tab count is known up front */}
               <div className={tab === "comments" ? "" : "hidden"}>
-                {stage === "REJECTED" && (
+                {stage === "NOT_A_FIT" && (
                   <div className="mb-3 flex items-start gap-2 rounded-md border border-destructive/20 bg-destructive/10 px-3 py-2 text-destructive">
                     <XCircle className="mt-0.5 h-4 w-4 shrink-0" />
                     <div className="text-sm">
-                      <div className="font-medium">Candidate rejected</div>
+                      <div className="font-medium">Not a fit</div>
                       {card.rejectedAtStage && (
                         <div className="text-xs text-destructive/80">
-                          Rejected at the {STAGE_LABELS[card.rejectedAtStage]}{" "}
-                          stage.
+                          Marked not a fit from{" "}
+                          {STAGE_LABELS[card.rejectedAtStage]}.
                         </div>
                       )}
                     </div>
@@ -386,68 +421,68 @@ export function CandidateDetailDrawer({
                       <Loader2 className="h-4 w-4 animate-spin" /> Loading resume…
                     </div>
                   )}
-                  {resumeReady && (
-                    <>
-                      <div className="mb-3 flex justify-end">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={handleDownload}
-                          disabled={downloading}
-                          className="gap-1.5"
-                        >
-                          {downloading ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                          ) : (
-                            <Download className="h-4 w-4" />
-                          )}
-                          Download profile
-                        </Button>
-                      </div>
-                      <ScaledResumePreview />
-                    </>
-                  )}
+                  {resumeReady && <ScaledResumePreview />}
                 </>
               )}
             </div>
 
             {/* Dialogs are nested INSIDE the sheet so closing them does not
                 dismiss the drawer (Radix treats them as child layers). */}
-            <Dialog open={confirmRejectOpen} onOpenChange={setConfirmRejectOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Reject candidate?</DialogTitle>
-            <DialogDescription>
-              {card && (
-                <>
-                  Move <strong>{card.name}</strong> to the Rejected column? This
-                  records that they were rejected at the{" "}
-                  <strong>
-                    {(stage ?? card.stage).replace(/_/g, " ").toLowerCase()}
-                  </strong>{" "}
-                  stage.
-                </>
-              )}
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setConfirmRejectOpen(false)}
-              disabled={rejecting}
+            <Dialog
+              open={confirmRejectOpen}
+              onOpenChange={(o) => {
+                if (!o) setNotAFitReason("");
+                setConfirmRejectOpen(o);
+              }}
             >
-              Cancel
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={confirmReject}
-              disabled={rejecting}
-            >
-              Reject
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Mark as not a fit?</DialogTitle>
+                  <DialogDescription>
+                    {card && (
+                      <>Select a reason for moving <strong>{card.name}</strong> to Not a Fit.</>
+                    )}
+                  </DialogDescription>
+                </DialogHeader>
+
+                <select
+                  value={notAFitReason}
+                  onChange={(e) => setNotAFitReason(e.target.value)}
+                  className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+                >
+                  <option value="">Select a reason…</option>
+                  <option>Candidate is not interested</option>
+                  <option>Wrong contact details</option>
+                  <option>Skills/Experience mismatch</option>
+                  <option>Qualification mismatch</option>
+                  <option>Notice period mismatch</option>
+                  <option>Compensation expectation mismatch</option>
+                  <option>Position has been filled</option>
+                  <option>Position cancelled</option>
+                  <option>Candidate failed background check</option>
+                  <option>Offer was not accepted</option>
+                  <option>Blacklisted candidate. Do not consider</option>
+                  <option>Other</option>
+                </select>
+
+                <DialogFooter>
+                  <Button
+                    variant="outline"
+                    onClick={() => { setConfirmRejectOpen(false); setNotAFitReason(""); }}
+                    disabled={rejecting}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="destructive"
+                    onClick={confirmReject}
+                    disabled={rejecting || !notAFitReason}
+                  >
+                    Not a Fit
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
 
             {/* Job description popup */}
             <JobDescriptionDialog

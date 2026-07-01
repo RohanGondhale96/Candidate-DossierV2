@@ -9,10 +9,33 @@ import {
   Loader2,
   AlertCircle,
   Info,
+  Eye,
+  EyeOff,
+  GripVertical,
+  Undo2,
+  Redo2,
 } from "lucide-react";
 import { toast } from "sonner";
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 import { useResumeStore, type ResumeServerData } from "@/stores/resumeStore";
+import { SECTION_TITLES } from "@/types/resume";
+import type { ResumeSection } from "@/types/resume";
+import { cn } from "@/lib/utils";
+import { AddSectionMenu } from "@/components/resume-builder/AddSectionMenu";
 import { exportResumeToPdf } from "@/lib/pdf";
 import { Button } from "@/components/ui/button";
 import { ResumeCanvas } from "@/components/resume-builder/ResumeCanvas";
@@ -47,6 +70,113 @@ function PanelGroup({
   );
 }
 
+function SortableSectionRow({
+  section,
+  onToggle,
+}: {
+  section: ResumeSection;
+  onToggle: () => void;
+}) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: section.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={cn(
+        "flex items-center gap-1.5 rounded px-2 py-1.5",
+        !section.visible && "opacity-40"
+      )}
+    >
+      <button
+        type="button"
+        className="shrink-0 cursor-grab text-gray-300 hover:text-gray-500 active:cursor-grabbing"
+        aria-label="Drag to reorder"
+        {...attributes}
+        {...listeners}
+      >
+        <GripVertical className="h-4 w-4" />
+      </button>
+      <span className="flex-1 truncate text-[13px]">
+        {SECTION_TITLES[section.type]}
+      </span>
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-label={section.visible ? "Hide section" : "Show section"}
+        className="shrink-0 text-gray-400 transition-colors hover:text-gray-600"
+      >
+        {section.visible ? (
+          <Eye className="h-4 w-4 text-[#0076FB]" />
+        ) : (
+          <EyeOff className="h-4 w-4" />
+        )}
+      </button>
+    </div>
+  );
+}
+
+function ComponentsPanel() {
+  const sections = useResumeStore((s) => s.content.sections);
+  const toggleVisibility = useResumeStore((s) => s.toggleSectionVisibility);
+  const reorderSections = useResumeStore((s) => s.reorderSections);
+
+  const manageable = sections.filter(
+    (s) => s.type !== "header" && s.type !== "recruiter_note"
+  );
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } })
+  );
+
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const from = sections.findIndex((s) => s.id === active.id);
+    const to = sections.findIndex((s) => s.id === over.id);
+    if (from !== -1 && to !== -1) reorderSections(from, to);
+  }
+
+  return (
+    <div className="px-4 py-3">
+      <DndContext
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
+      >
+        <SortableContext
+          items={manageable.map((s) => s.id)}
+          strategy={verticalListSortingStrategy}
+        >
+          <div className="mb-4 space-y-0.5">
+            {manageable.map((section) => (
+              <SortableSectionRow
+                key={section.id}
+                section={section}
+                onToggle={() => toggleVisibility(section.id)}
+              />
+            ))}
+          </div>
+        </SortableContext>
+      </DndContext>
+      <AddSectionMenu />
+    </div>
+  );
+}
+
 export default function ResumeBuilderPage({
   params,
 }: {
@@ -58,6 +188,10 @@ export default function ResumeBuilderPage({
   const candidateName = useResumeStore((s) => s.candidateName);
   const jobTitle = useResumeStore((s) => s.jobTitle);
   const initialized = useResumeStore((s) => s.initialized);
+  const undo = useResumeStore((s) => s.undo);
+  const redo = useResumeStore((s) => s.redo);
+  const canUndo = useResumeStore((s) => s.past.length > 0);
+  const canRedo = useResumeStore((s) => s.future.length > 0);
 
   const [status, setStatus] = useState<"loading" | "ready" | "error">(
     "loading"
@@ -66,6 +200,7 @@ export default function ResumeBuilderPage({
   const [aiCollapsed, setAiCollapsed] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [jobDialogOpen, setJobDialogOpen] = useState(false);
+  const [leftTab, setLeftTab] = useState<"design" | "components">("components");
 
   async function handleExport() {
     setExporting(true);
@@ -104,6 +239,24 @@ export default function ResumeBuilderPage({
       cancelled = true;
     };
   }, [params.candidateJobId, initFromServer]);
+
+  useEffect(() => {
+    function onKeyDown(e: KeyboardEvent) {
+      if (!e.ctrlKey && !e.metaKey) return;
+      // Don't intercept while typing inside a text field or rich editor.
+      const target = e.target as HTMLElement;
+      if (
+        target.tagName === "TEXTAREA" ||
+        target.tagName === "INPUT" ||
+        target.contentEditable === "true"
+      ) return;
+      if (e.key === "z" && !e.shiftKey) { e.preventDefault(); undo(); }
+      if (e.key === "z" && e.shiftKey)  { e.preventDefault(); redo(); }
+      if (e.key === "y")                { e.preventDefault(); redo(); }
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [undo, redo]);
 
   async function handleManualSave() {
     const ok = await saveResume("Manual save");
@@ -178,6 +331,33 @@ export default function ResumeBuilderPage({
 
         <div className="flex items-center gap-3">
           <AutoSaveIndicator />
+
+          {/* Undo / Redo */}
+          <div className="flex items-center gap-1">
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={undo}
+              disabled={!canUndo}
+              title="Undo (Ctrl+Z)"
+              className="h-8 w-8 p-0"
+            >
+              <Undo2 className="h-4 w-4" />
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={redo}
+              disabled={!canRedo}
+              title="Redo (Ctrl+Shift+Z)"
+              className="h-8 w-8 p-0"
+            >
+              <Redo2 className="h-4 w-4" />
+            </Button>
+          </div>
+
+          <div className="h-5 w-px bg-gray-200" />
+
           <Button
             size="sm"
             variant="outline"
@@ -213,25 +393,69 @@ export default function ResumeBuilderPage({
       {/* Body */}
       <div className="flex min-h-0 flex-1">
         {/* Left panel */}
-        <aside className="no-print w-[230px] shrink-0 divide-y overflow-auto border-r bg-white">
-          <div className="px-4 py-3">
+        <aside className="no-print flex w-[230px] shrink-0 flex-col overflow-hidden border-r bg-white">
+          {/* Profile Clarity — always visible at top */}
+          <div className="shrink-0 border-b px-4 py-3">
             <ScoreDisplay />
           </div>
-          <PanelGroup label="Template">
-            <TemplateSelector />
-          </PanelGroup>
-          <PanelGroup label="Accent color">
-            <ColorPicker />
-          </PanelGroup>
-          <PanelGroup label="Font">
-            <FontPicker />
-          </PanelGroup>
-          <PanelGroup label="Logo">
-            <LogoUploader />
-          </PanelGroup>
-          <PanelGroup label="History">
+
+          {/* Tab switcher */}
+          <div className="shrink-0 border-b">
+            <div className="flex">
+              <button
+                onClick={() => setLeftTab("components")}
+                className={cn(
+                  "flex-1 py-2.5 text-[12px] font-semibold transition-colors",
+                  leftTab === "components"
+                    ? "border-b-2 border-[#0076FB] text-[#0076FB]"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                Sections
+              </button>
+              <button
+                onClick={() => setLeftTab("design")}
+                className={cn(
+                  "flex-1 py-2.5 text-[12px] font-semibold transition-colors",
+                  leftTab === "design"
+                    ? "border-b-2 border-[#0076FB] text-[#0076FB]"
+                    : "text-muted-foreground hover:text-foreground"
+                )}
+              >
+                Design
+              </button>
+            </div>
+          </div>
+
+          {/* Scrollable tab content */}
+          <div className="min-h-0 flex-1 divide-y overflow-y-auto">
+            {leftTab === "design" ? (
+              <>
+                <PanelGroup label="Template">
+                  <TemplateSelector />
+                </PanelGroup>
+                <PanelGroup label="Accent color">
+                  <ColorPicker />
+                </PanelGroup>
+                <PanelGroup label="Font">
+                  <FontPicker />
+                </PanelGroup>
+                <PanelGroup label="Logo">
+                  <LogoUploader />
+                </PanelGroup>
+              </>
+            ) : (
+              <ComponentsPanel />
+            )}
+          </div>
+
+          {/* History — always pinned at bottom */}
+          <div className="shrink-0 border-t px-4 py-3">
+            <h3 className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-gray-400">
+              History
+            </h3>
             <VersionHistory />
-          </PanelGroup>
+          </div>
         </aside>
 
         {/* Center canvas */}

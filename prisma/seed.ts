@@ -519,11 +519,11 @@ const normalizedSeeds: CandidateSeed[] = candidateSeeds.map(ensureMinimum);
 
 // Deterministic dummy notice period + expected salary per candidate.
 const NOTICE_PERIODS = [
-  "Immediate",
-  "Within 15 days",
-  "Within 30 days",
-  "30–60 days",
-  "Serving notice (90 days)",
+  "Can join immediately",
+  "Serving notice period",
+  "1 month",
+  "2 months",
+  "3 months",
 ];
 function hashStr(s: string): number {
   let h = 0;
@@ -677,14 +677,7 @@ async function main() {
 
   // ── Candidate-Job pipeline entries ──
   // Each tuple: [candidate index, jobId, vendorUserId, stage, rejectedAtStage?, scores?]
-  type Stage =
-    | "SHORTLISTED"
-    | "IN_REVIEW"
-    | "REVIEW_ACCEPTED"
-    | "SCHEDULED_INTERVIEW"
-    | "PENDING_FEEDBACK"
-    | "ACCEPTED"
-    | "REJECTED";
+  type Stage = "INCOMING" | "PRESENTED" | "ACCEPTED" | "NOT_A_FIT";
 
   type CJ = {
     ci: number;
@@ -698,47 +691,36 @@ async function main() {
   };
 
   const cjs: CJ[] = [
-    // ── SHORTLISTED (8) — no resume yet ──
-    { ci: 0, job: job2, vendorId: vendor1.id, stage: "SHORTLISTED" },
-    { ci: 6, job: job2, vendorId: vendor2.id, stage: "SHORTLISTED" },
-    { ci: 1, job: job1, vendorId: vendor1.id, stage: "SHORTLISTED" },
-    { ci: 5, job: job1, vendorId: vendor1.id, stage: "SHORTLISTED" },
-    { ci: 3, job: job3, vendorId: vendor2.id, stage: "SHORTLISTED" },
-    { ci: 4, job: job5, vendorId: vendor2.id, stage: "SHORTLISTED" },
-    { ci: 16, job: job2, vendorId: vendor1.id, stage: "SHORTLISTED" },
-    { ci: 18, job: job4, vendorId: vendor1.id, stage: "SHORTLISTED" },
+    // ── INCOMING (8) — no resume yet ──
+    { ci: 0, job: job2, vendorId: vendor1.id, stage: "INCOMING" },
+    { ci: 6, job: job2, vendorId: vendor2.id, stage: "INCOMING" },
+    { ci: 1, job: job1, vendorId: vendor1.id, stage: "INCOMING" },
+    { ci: 5, job: job1, vendorId: vendor1.id, stage: "INCOMING" },
+    { ci: 3, job: job3, vendorId: vendor2.id, stage: "INCOMING" },
+    { ci: 4, job: job5, vendorId: vendor2.id, stage: "INCOMING" },
+    { ci: 16, job: job2, vendorId: vendor1.id, stage: "INCOMING" },
+    { ci: 18, job: job4, vendorId: vendor1.id, stage: "INCOMING" },
 
-    // ── IN_REVIEW (5) — resume built & sent ──
-    { ci: 2, job: job4, vendorId: vendor1.id, stage: "IN_REVIEW", jobMatch: 82, quality: 74, clientUserId: client2.id },
-    { ci: 10, job: job2, vendorId: vendor1.id, stage: "IN_REVIEW", jobMatch: 76, quality: 68, clientUserId: client1.id },
-    { ci: 11, job: job1, vendorId: vendor1.id, stage: "IN_REVIEW", jobMatch: 71, quality: 65, clientUserId: client1.id },
-    { ci: 12, job: job3, vendorId: vendor2.id, stage: "IN_REVIEW", jobMatch: 69, quality: 70, clientUserId: client1.id },
-    { ci: 14, job: job5, vendorId: vendor2.id, stage: "IN_REVIEW", jobMatch: 80, quality: 72, clientUserId: client2.id },
-
-    // ── REVIEW_ACCEPTED (4) — client accepted the profile ──
-    { ci: 1, job: job2, vendorId: vendor1.id, stage: "REVIEW_ACCEPTED", jobMatch: 73, quality: 78, clientUserId: client1.id },
-    { ci: 9, job: job5, vendorId: vendor2.id, stage: "REVIEW_ACCEPTED", jobMatch: 84, quality: 75, clientUserId: client2.id },
-    { ci: 13, job: job3, vendorId: vendor2.id, stage: "REVIEW_ACCEPTED", jobMatch: 77, quality: 71, clientUserId: client1.id },
-    { ci: 0, job: job4, vendorId: vendor1.id, stage: "REVIEW_ACCEPTED", jobMatch: 70, quality: 80, clientUserId: client2.id },
-
-    // ── SCHEDULED_INTERVIEW (3) ──
-    { ci: 4, job: job4, vendorId: vendor1.id, stage: "SCHEDULED_INTERVIEW", jobMatch: 79, quality: 76, clientUserId: client2.id },
-    { ci: 7, job: job2, vendorId: vendor2.id, stage: "SCHEDULED_INTERVIEW", jobMatch: 68, quality: 64, clientUserId: client1.id },
-    { ci: 8, job: job3, vendorId: vendor2.id, stage: "SCHEDULED_INTERVIEW", jobMatch: 66, quality: 62, clientUserId: client1.id },
-
-    // ── PENDING_FEEDBACK (2) — interview done, awaiting feedback ──
-    { ci: 5, job: job2, vendorId: vendor1.id, stage: "PENDING_FEEDBACK", jobMatch: 72, quality: 69, clientUserId: client1.id },
-    { ci: 15, job: job5, vendorId: vendor2.id, stage: "PENDING_FEEDBACK", jobMatch: 85, quality: 79, clientUserId: client2.id },
+    // ── PRESENTED (9) — resume built & sent to client ──
+    { ci: 2, job: job4, vendorId: vendor1.id, stage: "PRESENTED", jobMatch: 82, quality: 74, clientUserId: client2.id },
+    { ci: 10, job: job2, vendorId: vendor1.id, stage: "PRESENTED", jobMatch: 76, quality: 68, clientUserId: client1.id },
+    { ci: 11, job: job1, vendorId: vendor1.id, stage: "PRESENTED", jobMatch: 71, quality: 65, clientUserId: client1.id },
+    { ci: 12, job: job3, vendorId: vendor2.id, stage: "PRESENTED", jobMatch: 69, quality: 70, clientUserId: client1.id },
+    { ci: 14, job: job5, vendorId: vendor2.id, stage: "PRESENTED", jobMatch: 80, quality: 72, clientUserId: client2.id },
+    { ci: 1, job: job2, vendorId: vendor1.id, stage: "PRESENTED", jobMatch: 73, quality: 78, clientUserId: client1.id },
+    { ci: 9, job: job5, vendorId: vendor2.id, stage: "PRESENTED", jobMatch: 84, quality: 75, clientUserId: client2.id },
+    { ci: 13, job: job3, vendorId: vendor2.id, stage: "PRESENTED", jobMatch: 77, quality: 71, clientUserId: client1.id },
+    { ci: 0, job: job4, vendorId: vendor1.id, stage: "PRESENTED", jobMatch: 70, quality: 80, clientUserId: client2.id },
 
     // ── ACCEPTED (2) — hired ──
     { ci: 2, job: job1, vendorId: vendor1.id, stage: "ACCEPTED", jobMatch: 60, quality: 73, clientUserId: client1.id },
     { ci: 3, job: job2, vendorId: vendor2.id, stage: "ACCEPTED", jobMatch: 74, quality: 77, clientUserId: client1.id },
 
-    // ── REJECTED (4): 2 from In Review, 2 from Pending Feedback ──
-    { ci: 17, job: job2, vendorId: vendor1.id, stage: "REJECTED", rejectedAtStage: "IN_REVIEW", jobMatch: 45, quality: 50, clientUserId: client1.id },
-    { ci: 19, job: job5, vendorId: vendor2.id, stage: "REJECTED", rejectedAtStage: "IN_REVIEW", jobMatch: 48, quality: 52, clientUserId: client2.id },
-    { ci: 18, job: job3, vendorId: vendor2.id, stage: "REJECTED", rejectedAtStage: "PENDING_FEEDBACK", jobMatch: 63, quality: 60, clientUserId: client1.id },
-    { ci: 7, job: job4, vendorId: vendor1.id, stage: "REJECTED", rejectedAtStage: "PENDING_FEEDBACK", jobMatch: 58, quality: 61, clientUserId: client2.id },
+    // ── NOT_A_FIT (4) ──
+    { ci: 17, job: job2, vendorId: vendor1.id, stage: "NOT_A_FIT", rejectedAtStage: "PRESENTED", jobMatch: 45, quality: 50, clientUserId: client1.id },
+    { ci: 19, job: job5, vendorId: vendor2.id, stage: "NOT_A_FIT", rejectedAtStage: "PRESENTED", jobMatch: 48, quality: 52, clientUserId: client2.id },
+    { ci: 18, job: job3, vendorId: vendor2.id, stage: "NOT_A_FIT", rejectedAtStage: "PRESENTED", jobMatch: 63, quality: 60, clientUserId: client1.id },
+    { ci: 7, job: job4, vendorId: vendor1.id, stage: "NOT_A_FIT", rejectedAtStage: "PRESENTED", jobMatch: 58, quality: 61, clientUserId: client2.id },
   ];
 
   let resumeCount = 0;
@@ -747,7 +729,7 @@ async function main() {
     const cj = cjs[i];
     const entry = candidates[cj.ci];
     const noteText = RECRUITER_NOTES[i % RECRUITER_NOTES.length];
-    const hasResume = cj.stage !== "SHORTLISTED";
+    const hasResume = cj.stage !== "INCOMING";
 
     const created = await prisma.candidateJob.create({
       data: {
@@ -794,9 +776,7 @@ async function main() {
       // A client comment on a couple of reviewed candidates
       if (
         cj.clientUserId &&
-        (cj.stage === "IN_REVIEW" ||
-          cj.stage === "REVIEW_ACCEPTED" ||
-          cj.stage === "ACCEPTED")
+        (cj.stage === "PRESENTED" || cj.stage === "ACCEPTED")
       ) {
         if (i % 3 === 0) {
           await prisma.comment.create({

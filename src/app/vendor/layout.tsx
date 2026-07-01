@@ -8,6 +8,6 @@ export default async function VendorRootLayout({
 }) {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
-  if (user.role !== "VENDOR") redirect("/client/dashboard");
+  if (user.role !== "VENDOR") redirect("/client/jobs");
   return <>{children}</>;
 }

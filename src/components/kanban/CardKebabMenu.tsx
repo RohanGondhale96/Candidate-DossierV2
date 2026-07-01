@@ -1,8 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { MoreVertical, FileEdit, CalendarPlus, XCircle } from "lucide-react";
-import { toast } from "sonner";
+import { MoreVertical, FileEdit, XCircle, Send } from "lucide-react";
 
 import {
   DropdownMenu,
@@ -23,45 +22,47 @@ import { KEBAB_ACTIONS, type KebabAction } from "@/lib/constants";
 import type { KanbanCard } from "@/types/kanban";
 
 const LABELS: Record<KebabAction, { label: string; icon: typeof FileEdit }> = {
-  edit_resume: { label: "Edit Resume", icon: FileEdit },
-  schedule_interview: { label: "Schedule Interview", icon: CalendarPlus },
-  reject: { label: "Reject Candidate", icon: XCircle },
+  share_with_client: { label: "Share with Client", icon: Send },
+  edit_resume: { label: "Edit Profile", icon: FileEdit },
+  not_a_fit: { label: "Not a Fit", icon: XCircle },
 };
 
 export function CardKebabMenu({
   card,
   onReject,
+  onShare,
 }: {
   card: KanbanCard;
   onReject: (candidateJobId: string) => Promise<void> | void;
+  onShare?: (card: KanbanCard) => void;
 }) {
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const [rejecting, setRejecting] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
   const actions = KEBAB_ACTIONS[card.stage];
 
   if (actions.length === 0) return null;
 
   function handle(action: KebabAction) {
-    if (action === "edit_resume") {
+    if (action === "share_with_client") {
+      onShare?.(card);
+    } else if (action === "edit_resume") {
       window.open(
         `/vendor/resume-builder/${card.candidateJobId}`,
         "_blank",
         "noopener"
       );
-    } else if (action === "schedule_interview") {
-      toast("Interview scheduling is coming soon");
-    } else if (action === "reject") {
+    } else if (action === "not_a_fit") {
       setConfirmOpen(true);
     }
   }
 
-  async function confirmReject() {
-    setRejecting(true);
+  async function confirm() {
+    setSubmitting(true);
     try {
       await onReject(card.candidateJobId);
       setConfirmOpen(false);
     } finally {
-      setRejecting(false);
+      setSubmitting(false);
     }
   }
 
@@ -80,17 +81,18 @@ export function CardKebabMenu({
             <MoreVertical className="h-4 w-4" />
           </button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent
-          align="end"
-          onClick={(e) => e.stopPropagation()}
-        >
+        <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
           {actions.map((action) => {
             const { label, icon: Icon } = LABELS[action];
             return (
               <DropdownMenuItem
                 key={action}
                 onClick={() => handle(action)}
-                className={action === "reject" ? "text-destructive focus:text-destructive" : ""}
+                className={
+                  action === "not_a_fit"
+                    ? "text-destructive focus:text-destructive"
+                    : ""
+                }
               >
                 <Icon className="h-4 w-4" />
                 {label}
@@ -103,28 +105,26 @@ export function CardKebabMenu({
       <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <DialogContent onClick={(e) => e.stopPropagation()}>
           <DialogHeader>
-            <DialogTitle>Reject candidate?</DialogTitle>
+            <DialogTitle>Mark as not a fit?</DialogTitle>
             <DialogDescription>
-              Move <strong>{card.name}</strong> to the Rejected column? This
-              records that they were rejected at the{" "}
-              <strong>{card.stage.replace(/_/g, " ").toLowerCase()}</strong>{" "}
-              stage.
+              Move <strong>{card.name}</strong> to Not a Fit? You can drag them
+              back to any column if needed.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <Button
               variant="outline"
               onClick={() => setConfirmOpen(false)}
-              disabled={rejecting}
+              disabled={submitting}
             >
               Cancel
             </Button>
             <Button
               variant="destructive"
-              onClick={confirmReject}
-              disabled={rejecting}
+              onClick={confirm}
+              disabled={submitting}
             >
-              Reject
+              Not a Fit
             </Button>
           </DialogFooter>
         </DialogContent>

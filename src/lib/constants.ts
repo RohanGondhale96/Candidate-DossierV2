@@ -5,63 +5,45 @@
 export type UserRole = "VENDOR" | "CLIENT";
 
 export type PipelineStage =
-  | "SHORTLISTED"
-  | "IN_REVIEW"
-  | "REVIEW_ACCEPTED"
-  | "SCHEDULED_INTERVIEW"
-  | "PENDING_FEEDBACK"
+  | "INCOMING"
+  | "PRESENTED"
   | "ACCEPTED"
-  | "REJECTED";
+  | "NOT_A_FIT";
 
 export const PIPELINE_STAGES: PipelineStage[] = [
-  "SHORTLISTED",
-  "IN_REVIEW",
-  "REVIEW_ACCEPTED",
-  "SCHEDULED_INTERVIEW",
-  "PENDING_FEEDBACK",
+  "INCOMING",
+  "PRESENTED",
   "ACCEPTED",
-  "REJECTED",
+  "NOT_A_FIT",
 ];
 
 export const STAGE_LABELS: Record<PipelineStage, string> = {
-  SHORTLISTED: "Shortlisted",
-  IN_REVIEW: "In Review",
-  REVIEW_ACCEPTED: "Review Accepted",
-  SCHEDULED_INTERVIEW: "Scheduled Interview",
-  PENDING_FEEDBACK: "Pending Feedback",
-  ACCEPTED: "Accepted",
-  REJECTED: "Rejected",
+  INCOMING: "Incoming Profiles",
+  PRESENTED: "In Review",
+  ACCEPTED: "Accepted by Client",
+  NOT_A_FIT: "Not a Fit",
 };
 
-// Compact column headings for the board (kept identical to STAGE_LABELS here).
 export const STAGE_SHORT_LABELS: Record<PipelineStage, string> = {
-  SHORTLISTED: "Shortlisted",
-  IN_REVIEW: "In Review",
-  REVIEW_ACCEPTED: "Review Accepted",
-  SCHEDULED_INTERVIEW: "Scheduled Interview",
-  PENDING_FEEDBACK: "Pending Feedback",
+  INCOMING: "Incoming",
+  PRESENTED: "In Review",
   ACCEPTED: "Accepted",
-  REJECTED: "Rejected",
+  NOT_A_FIT: "Not a Fit",
 };
 
 export const PIPELINE_COLUMNS: { stage: PipelineStage; label: string }[] =
   PIPELINE_STAGES.map((stage) => ({ stage, label: STAGE_LABELS[stage] }));
 
-export type KebabAction = "edit_resume" | "schedule_interview" | "reject";
+export type KebabAction = "edit_resume" | "not_a_fit" | "share_with_client";
 
 export const KEBAB_ACTIONS: Record<PipelineStage, KebabAction[]> = {
-  SHORTLISTED: ["edit_resume", "schedule_interview", "reject"],
-  IN_REVIEW: ["edit_resume", "schedule_interview", "reject"],
-  REVIEW_ACCEPTED: ["edit_resume", "schedule_interview", "reject"],
-  SCHEDULED_INTERVIEW: ["edit_resume", "schedule_interview", "reject"],
-  PENDING_FEEDBACK: ["edit_resume", "reject"],
-  ACCEPTED: ["edit_resume", "reject"],
-  REJECTED: [],
+  INCOMING: ["share_with_client", "edit_resume", "not_a_fit"],
+  PRESENTED: ["edit_resume", "not_a_fit"],
+  ACCEPTED: ["edit_resume"],
+  NOT_A_FIT: [],
 };
 
-// Transitions are intentionally unrestricted: a vendor can drag a candidate to
-// ANY other stage (including back to a previous one, or out of Rejected) so an
-// accidental move is always reversible. Each stage maps to every other stage.
+// All stages can move to any other stage — fully reversible drag.
 export const VALID_TRANSITIONS: Record<PipelineStage, PipelineStage[]> =
   Object.fromEntries(
     PIPELINE_STAGES.map((stage) => [

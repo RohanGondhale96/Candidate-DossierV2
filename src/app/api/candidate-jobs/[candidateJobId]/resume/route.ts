@@ -51,6 +51,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
       clientName: cj.job.client.name,
       stage: cj.stage as PipelineStage,
       recruiterNotes: cj.recruiterNotes,
+      candidateSummary: cj.candidateSummary ?? null,
       job: {
         description: cj.job.description,
         requirements: cj.job.requirements,

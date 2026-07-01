@@ -16,13 +16,13 @@ import {
 import { cn } from "@/lib/utils";
 import { hexToRgba } from "@/lib/color";
 import { useResumeStore } from "@/stores/resumeStore";
-import type { HeaderData, ResumeSection, ResumeSectionType } from "@/types/resume";
+import type { HeaderData, ResumeSection, ResumeSectionType, RecruiterNoteData } from "@/types/resume";
 import { fontStack } from "@/types/resume";
 import { getTheme } from "./templates/theme";
 import { HeaderSection } from "./sections/HeaderSection";
 import { SectionRenderer } from "./SectionRenderer";
 import { SectionWrapper } from "./SectionWrapper";
-import { AddSectionMenu } from "./AddSectionMenu";
+import { RecruiterNoteSection } from "./sections/RecruiterNoteSection";
 
 // For the two-column (Modern) layout: which sections go in the sidebar vs main.
 const SIDEBAR_TYPES: ResumeSectionType[] = [
@@ -51,10 +51,11 @@ export function ResumeCanvas({ editable = true }: { editable?: boolean }) {
   const theme = getTheme(templateId);
   const twoCol = theme.layout === "two-column";
   const header = sections.find((s) => s.type === "header");
+  const recruiterNoteSection = sections.find((s) => s.type === "recruiter_note");
   // In the editor, keep hidden sections visible (dimmed) so they can be
   // restored; everywhere else (print/export, client view) omit them.
   const bodySections = sections.filter(
-    (s) => s.type !== "header" && (editable || s.visible)
+    (s) => s.type !== "header" && s.type !== "recruiter_note" && (editable || s.visible)
   );
 
   const isSidebar = (t: ResumeSectionType) => SIDEBAR_TYPES.includes(t);
@@ -101,50 +102,55 @@ export function ResumeCanvas({ editable = true }: { editable?: boolean }) {
 
   return (
     <div className="flex justify-center p-8">
-      <div
-        className={cn("resume-page print-area", theme.pageClass)}
-        style={{
-          ["--accent-color" as string]: accentColor,
-          // Inline style overrides the template's font-* class. Leave unset for
-          // the "" (default) option so the template's own typeface applies.
-          fontFamily: fontStack(fontFamily),
-        }}
-      >
-        {header && (
-          <HeaderSection
-            sectionId={header.id}
-            data={header.data as HeaderData}
-            theme={theme}
-            accentColor={accentColor}
-            editable={editable}
-            logoUrl={logoUrl}
-            logoHidden={logoHidden}
-          />
+      <div className="flex flex-col gap-4" style={{ width: "fit-content" }}>
+        {/* Recruiter note — above the card, editor only, not part of the PDF */}
+        {recruiterNoteSection && editable && (
+          <div className="no-print w-full">
+            <RecruiterNoteSection
+              sectionId={recruiterNoteSection.id}
+              data={recruiterNoteSection.data as RecruiterNoteData}
+              editable={editable}
+            />
+          </div>
         )}
 
-        <div className={cn(theme.bodyPadClass)}>
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleDragEnd}
-          >
-            {twoCol ? (
-              <TwoColumn
-                accentColor={accentColor}
-                sidebar={bodySections.filter((s) => isSidebar(s.type))}
-                main={bodySections.filter((s) => !isSidebar(s.type))}
-                renderList={sortableList}
-              />
-            ) : (
-              sortableList(bodySections)
-            )}
-          </DndContext>
-
-          {editable && (
-            <div className="no-print pt-3">
-              <AddSectionMenu />
-            </div>
+        <div
+          className={cn("resume-page print-area", theme.pageClass)}
+          style={{
+            ["--accent-color" as string]: accentColor,
+            fontFamily: fontStack(fontFamily),
+          }}
+        >
+          {header && (
+            <HeaderSection
+              sectionId={header.id}
+              data={header.data as HeaderData}
+              theme={theme}
+              accentColor={accentColor}
+              editable={editable}
+              logoUrl={logoUrl}
+              logoHidden={logoHidden}
+            />
           )}
+
+          <div className={cn(theme.bodyPadClass)}>
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
+            >
+              {twoCol ? (
+                <TwoColumn
+                  accentColor={accentColor}
+                  sidebar={bodySections.filter((s) => isSidebar(s.type))}
+                  main={bodySections.filter((s) => !isSidebar(s.type))}
+                  renderList={sortableList}
+                />
+              ) : (
+                sortableList(bodySections)
+              )}
+            </DndContext>
+          </div>
         </div>
       </div>
     </div>

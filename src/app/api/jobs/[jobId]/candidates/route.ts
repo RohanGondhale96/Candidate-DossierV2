@@ -41,7 +41,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
         jobId: params.jobId,
         ...(user.role === "VENDOR"
           ? { vendorUserId: user.id }
-          : { stage: { not: "SHORTLISTED" } }),
+          : { stage: { not: "INCOMING" } }),
       },
       include: { candidate: true, resume: true, vendor: true },
       orderBy: { updatedAt: "desc" },
@@ -69,6 +69,7 @@ export async function GET(_req: NextRequest, { params }: Params) {
       return {
         candidateJobId: cj.id,
         candidateId: cj.candidateId,
+        jobId: params.jobId,
         name: `${cj.candidate.firstName} ${cj.candidate.lastName}`,
         title: cj.candidate.currentTitle,
         jobTitle: job.title,
@@ -81,6 +82,8 @@ export async function GET(_req: NextRequest, { params }: Params) {
         rejectedAtStage: (cj.rejectedAtStage as PipelineStage | null) ?? null,
         jobMatchScore,
         qualityScore,
+        recruiterNotes: cj.recruiterNotes,
+        candidateSummary: cj.candidateSummary ?? null,
         vendorName: cj.vendor.name,
       };
     });

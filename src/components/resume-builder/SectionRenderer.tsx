@@ -36,7 +36,11 @@ export function SectionRenderer({
   switch (section.type) {
     case "recruiter_note":
       return (
-        <RecruiterNoteSection {...common} data={section.data as RecruiterNoteData} />
+        <RecruiterNoteSection
+          sectionId={section.id}
+          editable={editable}
+          data={section.data as RecruiterNoteData}
+        />
       );
     case "summary":
       return <SummarySection {...common} data={section.data as SummaryData} />;

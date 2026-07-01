@@ -41,6 +41,7 @@ export async function GET() {
       return {
         candidateJobId: cj.id,
         candidateId: cj.candidateId,
+        jobId: cj.jobId,
         name: `${cj.candidate.firstName} ${cj.candidate.lastName}`,
         title: cj.candidate.currentTitle,
         jobTitle: cj.job.title,
@@ -53,6 +54,8 @@ export async function GET() {
         rejectedAtStage: (cj.rejectedAtStage as PipelineStage | null) ?? null,
         jobMatchScore,
         qualityScore,
+        recruiterNotes: cj.recruiterNotes,
+        candidateSummary: cj.candidateSummary ?? null,
         vendorName: cj.vendor.name,
       };
     });

@@ -25,11 +25,13 @@ export function KanbanBoard({
   cards,
   onStageChange,
   onReject,
+  onShare,
   onOpen,
 }: {
   cards: KanbanCard[];
   onStageChange: (id: string, newStage: PipelineStage) => void;
   onReject: (id: string) => Promise<void> | void;
+  onShare?: (card: KanbanCard) => void;
   onOpen: (card: KanbanCard) => void;
 }) {
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -63,7 +65,7 @@ export function KanbanBoard({
       onDragEnd={handleDragEnd}
       onDragCancel={() => setActiveId(null)}
     >
-      <div className="flex h-full gap-4 overflow-x-auto px-6 pb-4">
+      <div className="flex h-full gap-4 overflow-x-auto px-6 pb-4 pt-4">
         {PIPELINE_COLUMNS.map((col) => (
           <KanbanColumn
             key={col.stage}
@@ -76,6 +78,7 @@ export function KanbanBoard({
               VALID_TRANSITIONS[activeCard.stage].includes(col.stage)
             }
             onReject={onReject}
+            onShare={onShare}
             onOpen={onOpen}
           />
         ))}
