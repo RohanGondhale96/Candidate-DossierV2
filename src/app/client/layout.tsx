@@ -5,7 +5,7 @@ import { FileText } from "lucide-react";
 import { getCurrentUser } from "@/lib/session";
 import { UserMenu } from "@/components/layout/UserMenu";
 import { ClientTopNav } from "@/components/layout/ClientTopNav";
-import { NotificationBell } from "@/components/layout/NotificationBell";
+import { ClientNotificationBell } from "@/components/layout/ClientNotificationBell";
 
 export default async function ClientLayout({
   children,
@@ -31,9 +31,7 @@ export default async function ClientLayout({
           </div>
         </Link>
         <div className="flex items-center gap-2">
-          <NotificationBell
-            getItemUrl={(candidateJobId) => `/client/review/${candidateJobId}`}
-          />
+          <ClientNotificationBell />
           <UserMenu
             name={user.name ?? "Client"}
             email={user.email ?? ""}
