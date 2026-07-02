@@ -552,6 +552,7 @@ async function main() {
   console.log("🌱 Seeding Candidate Dossier...");
 
   // Clean slate (dependency order)
+  await prisma.notification.deleteMany();
   await prisma.comment.deleteMany();
   await prisma.resumeVersion.deleteMany();
   await prisma.resumeData.deleteMany();
@@ -937,11 +938,21 @@ async function main() {
             },
           });
         } else if (cj.stage === "PRESENTED") {
+          // Client asked a question → vendor gets COMMENT_ADDED
           await prisma.notification.create({
             data: {
               recipientId: cj.vendorId,
               actorId: cj.clientUserId,
               type: "COMMENT_ADDED",
+              candidateJobId: created.id,
+            },
+          });
+          // Vendor replied → client gets VENDOR_REPLIED
+          await prisma.notification.create({
+            data: {
+              recipientId: cj.clientUserId,
+              actorId: cj.vendorId,
+              type: "VENDOR_REPLIED",
               candidateJobId: created.id,
             },
           });

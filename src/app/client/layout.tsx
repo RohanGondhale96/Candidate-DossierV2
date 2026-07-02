@@ -5,6 +5,7 @@ import { FileText } from "lucide-react";
 import { getCurrentUser } from "@/lib/session";
 import { UserMenu } from "@/components/layout/UserMenu";
 import { ClientTopNav } from "@/components/layout/ClientTopNav";
+import { NotificationBell } from "@/components/layout/NotificationBell";
 
 export default async function ClientLayout({
   children,
@@ -17,7 +18,7 @@ export default async function ClientLayout({
 
   return (
     <div className="flex h-screen flex-col bg-muted/40">
-      <header className="flex h-14 shrink-0 items-center justify-between border-b bg-background px-6">
+      <header className="relative z-40 flex h-14 shrink-0 items-center justify-between border-b bg-background px-6">
         <Link href="/client/jobs" className="flex shrink-0 items-center gap-2.5">
           <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
             <FileText className="h-4 w-4" />
@@ -29,11 +30,16 @@ export default async function ClientLayout({
             </span>
           </div>
         </Link>
-        <UserMenu
-          name={user.name ?? "Client"}
-          email={user.email ?? ""}
-          org={user.organizationName}
-        />
+        <div className="flex items-center gap-2">
+          <NotificationBell
+            getItemUrl={(candidateJobId) => `/client/review/${candidateJobId}`}
+          />
+          <UserMenu
+            name={user.name ?? "Client"}
+            email={user.email ?? ""}
+            org={user.organizationName}
+          />
+        </div>
       </header>
       <div className="shrink-0 border-b bg-background px-6">
         <ClientTopNav />

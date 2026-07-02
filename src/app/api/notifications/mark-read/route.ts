@@ -8,7 +8,7 @@ export async function POST(req: NextRequest) {
     const auth = await requireUser();
     if (auth instanceof NextResponse) return auth;
     const user = auth;
-    if (user.role !== "VENDOR") return jsonError("Forbidden", 403);
+    if (user.role !== "VENDOR" && user.role !== "CLIENT") return jsonError("Forbidden", 403);
 
     const { candidateJobId } = await req.json();
     if (!candidateJobId) return jsonError("candidateJobId is required", 400);

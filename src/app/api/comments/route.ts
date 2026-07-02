@@ -81,8 +81,8 @@ export async function POST(req: NextRequest) {
       include: { user: { select: { name: true, role: true } } },
     });
 
-    // Notify the vendor when a client posts a comment
     if (user.role === "CLIENT") {
+      // Notify vendor when client posts a comment
       const cj = await prisma.candidateJob.findUnique({
         where: { id: candidateJobId },
         select: { vendorUserId: true },
@@ -92,6 +92,25 @@ export async function POST(req: NextRequest) {
           recipientId: cj.vendorUserId,
           actorId: user.id,
           type: "COMMENT_ADDED",
+          candidateJobId,
+        }).catch(() => {});
+      }
+    } else if (user.role === "VENDOR") {
+      // Notify the last client who commented when vendor replies
+      const lastClientComment = await prisma.comment.findFirst({
+        where: {
+          candidateJobId,
+          userId: { not: user.id },
+          user: { role: "CLIENT" },
+        },
+        orderBy: { createdAt: "desc" },
+        select: { userId: true },
+      });
+      if (lastClientComment) {
+        createNotification({
+          recipientId: lastClientComment.userId,
+          actorId: user.id,
+          type: "VENDOR_REPLIED",
           candidateJobId,
         }).catch(() => {});
       }

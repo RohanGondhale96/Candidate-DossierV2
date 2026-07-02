@@ -8,7 +8,7 @@ export async function GET(req: Request) {
     const auth = await requireUser();
     if (auth instanceof NextResponse) return auth;
     const user = auth;
-    if (user.role !== "VENDOR") return jsonError("Forbidden", 403);
+    if (user.role !== "VENDOR" && user.role !== "CLIENT") return jsonError("Forbidden", 403);
 
     const { searchParams } = new URL(req.url);
     const filterCandidateJobId = searchParams.get("candidateJobId");
