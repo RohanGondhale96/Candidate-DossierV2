@@ -580,10 +580,10 @@ async function main() {
   // ── Users (password123 for all) ──
   const passwordHash = await bcrypt.hash("password123", 10);
   const vendor1 = await prisma.user.create({
-    data: { email: "vendor1@ripplehire.com", name: "Rahul Sharma", passwordHash, role: "VENDOR", organizationId: talentbird.id },
+    data: { email: "rec1@ripplehire.com", name: "Rahul Sharma", passwordHash, role: "VENDOR", organizationId: talentbird.id },
   });
   const vendor2 = await prisma.user.create({
-    data: { email: "vendor2@ripplehire.com", name: "Priya Patel", passwordHash, role: "VENDOR", organizationId: hirewave.id },
+    data: { email: "rec2@ripplehire.com", name: "Priya Patel", passwordHash, role: "VENDOR", organizationId: hirewave.id },
   });
   const client1 = await prisma.user.create({
     data: { email: "client1@acmebank.com", name: "Amit Verma", passwordHash, role: "CLIENT", organizationId: axis.id },

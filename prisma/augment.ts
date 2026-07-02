@@ -40,7 +40,7 @@ interface RoleSpec {
 const ROLES: RoleSpec[] = [
   {
     jobTitle: "Senior Product Designer",
-    vendorEmail: "vendor1@ripplehire.com",
+    vendorEmail: "rec1@ripplehire.com",
     skills: ["Figma", "User Research", "Prototyping", "Design Systems", "Wireframing", "Usability Testing"],
     titleWord: "Product Designer",
     company: "DesignWorks Studio",
@@ -51,7 +51,7 @@ const ROLES: RoleSpec[] = [
   },
   {
     jobTitle: "Full Stack Engineer",
-    vendorEmail: "vendor1@ripplehire.com",
+    vendorEmail: "rec1@ripplehire.com",
     skills: ["React", "Node.js", "TypeScript", "PostgreSQL", "AWS", "Docker"],
     titleWord: "Full Stack Engineer",
     company: "BuildStack Labs",
@@ -62,7 +62,7 @@ const ROLES: RoleSpec[] = [
   },
   {
     jobTitle: "Data Analyst",
-    vendorEmail: "vendor2@ripplehire.com",
+    vendorEmail: "rec2@ripplehire.com",
     skills: ["SQL", "Python", "Tableau", "Excel", "Statistics", "Power BI"],
     titleWord: "Data Analyst",
     company: "InsightMetrics",
@@ -73,7 +73,7 @@ const ROLES: RoleSpec[] = [
   },
   {
     jobTitle: "DevOps Engineer",
-    vendorEmail: "vendor1@ripplehire.com",
+    vendorEmail: "rec1@ripplehire.com",
     skills: ["Docker", "Kubernetes", "AWS", "CI/CD", "Terraform", "Jenkins"],
     titleWord: "DevOps Engineer",
     company: "CloudOps Systems",
@@ -84,7 +84,7 @@ const ROLES: RoleSpec[] = [
   },
   {
     jobTitle: "Backend Engineer",
-    vendorEmail: "vendor2@ripplehire.com",
+    vendorEmail: "rec2@ripplehire.com",
     skills: ["Java", "Spring Boot", "Microservices", "PostgreSQL", "Redis", "Kafka"],
     titleWord: "Backend Engineer",
     company: "CoreServe Tech",
