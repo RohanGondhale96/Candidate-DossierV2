@@ -817,21 +817,103 @@ async function main() {
       });
       resumeCount++;
 
-      // A client comment on a couple of reviewed candidates
-      if (
-        cj.clientUserId &&
-        (cj.stage === "PRESENTED" || cj.stage === "ACCEPTED")
-      ) {
-        if (i % 3 === 0) {
-          await prisma.comment.create({
-            data: {
-              candidateJobId: created.id,
-              userId: cj.clientUserId,
-              content:
-                "Good profile overall. Could you confirm their hands-on experience with our core stack before we proceed?",
-            },
-          });
-        }
+      // Demo comment threads — vendor ↔ client conversation per stage
+      const candidateName = `${entry.seed.firstName} ${entry.seed.lastName}`;
+      const notice = noticeFor(entry.seed);
+      const salary = salaryFor(entry.seed);
+      const v = i % 3; // variant selector for message copy
+
+      if (cj.stage === "PRESENTED" && cj.clientUserId) {
+        await prisma.comment.create({
+          data: {
+            candidateJobId: created.id,
+            userId: cj.vendorId,
+            content: [
+              `Hi — I've added ${candidateName}'s profile for your review. Strong fit for the role; happy to arrange a screening call if the profile looks good to you.`,
+              `${candidateName} is now ready for your review. Let me know if you have any questions or want me to dig into any part of their background.`,
+              `Just shared ${candidateName}'s profile. They've been briefed on the role and are excited about the opportunity. Would love to get your initial thoughts!`,
+            ][v],
+          },
+        });
+        await prisma.comment.create({
+          data: {
+            candidateJobId: created.id,
+            userId: cj.clientUserId,
+            content: [
+              `Thanks, profile looks solid. Can you confirm their notice period and whether they're open to a hybrid work arrangement?`,
+              `Good profile. A couple of things — how hands-on are they with our core stack day-to-day? And what's their expected CTC?`,
+              `Appreciate the submission. The experience section looks relevant. Can you share any work samples or a portfolio link if available?`,
+            ][v],
+          },
+        });
+        await prisma.comment.create({
+          data: {
+            candidateJobId: created.id,
+            userId: cj.vendorId,
+            content: [
+              `Sure! ${candidateName} is on a ${notice} and is open to hybrid. Should I go ahead and schedule a screening call?`,
+              `${candidateName} works hands-on with the stack in their current role. Their expected CTC is ${salary}. Let me know if you'd like to proceed!`,
+              `Will check on samples and get back to you shortly. They're on ${notice} if that helps with timeline planning.`,
+            ][v],
+          },
+        });
+      } else if (cj.stage === "ACCEPTED" && cj.clientUserId) {
+        await prisma.comment.create({
+          data: {
+            candidateJobId: created.id,
+            userId: cj.clientUserId,
+            content: [
+              `Really impressed with ${candidateName}'s background. Let's move forward — can you schedule a technical interview for next week?`,
+              `${candidateName} looks like a strong fit. The hiring manager loved the profile. Can we set up an intro call this week?`,
+              `After reviewing the resume, we'd like to move ${candidateName} to the interview stage. What does their availability look like?`,
+            ][v],
+          },
+        });
+        await prisma.comment.create({
+          data: {
+            candidateJobId: created.id,
+            userId: cj.vendorId,
+            content: [
+              `Wonderful! ${candidateName} is very interested. They're available Monday–Wednesday next week. What slots work for your team?`,
+              `Great news! They're equally excited. ${candidateName} is free Thursday and Friday this week. Shall I propose a 45-minute intro slot?`,
+              `${candidateName} is on ${notice}, so timing works well. Could you share two or three preferred slots and I'll confirm with them?`,
+            ][v],
+          },
+        });
+        await prisma.comment.create({
+          data: {
+            candidateJobId: created.id,
+            userId: cj.clientUserId,
+            content: [
+              `Monday 2 PM or Wednesday 11 AM works for us. Please confirm which slot ${candidateName} prefers and send the calendar invite.`,
+              `Thursday 3 PM is ideal. Please confirm with the candidate and loop in hr@company.com on the invite.`,
+              `Tuesday 10 AM works great. Go ahead and lock it in — looking forward to the conversation!`,
+            ][v],
+          },
+        });
+      } else if (cj.stage === "NOT_A_FIT" && cj.clientUserId) {
+        await prisma.comment.create({
+          data: {
+            candidateJobId: created.id,
+            userId: cj.clientUserId,
+            content: [
+              `After review, we feel ${candidateName}'s experience doesn't quite align with what we need at this stage. The skill depth in our core area is a bit below the bar we're looking for.`,
+              `Thanks for the submission — the profile has potential, but we need someone with more direct hands-on experience for this particular role. Not the right fit for now.`,
+              `We reviewed ${candidateName}'s background carefully but the seniority level doesn't match our current opening. We'd encourage re-submitting if a more junior position opens up.`,
+            ][v % 3],
+          },
+        });
+        await prisma.comment.create({
+          data: {
+            candidateJobId: created.id,
+            userId: cj.vendorId,
+            content: [
+              `Understood, thank you for the clear feedback. I'll look for profiles with stronger depth in that area and share new options shortly.`,
+              `Appreciate the clarity. I'll refine the search based on your feedback and come back with more targeted profiles. Thanks for reviewing!`,
+              `Got it, thanks for letting us know. We'll keep ${candidateName} in mind for future roles that are a closer match and focus the next submission on the seniority gap.`,
+            ][v % 3],
+          },
+        });
       }
     }
   }
