@@ -111,25 +111,24 @@ export function CandidateDetailDrawer({
     setUnreadCount(0);
   }, [card, initialTab]);
 
-  // Fetch unread comment count when drawer opens; mark as read immediately if
-  // the drawer opened directly on the comments tab (e.g. from a notification).
+  // Fetch unread notifications when drawer opens.
+  // - Count COMMENT_ADDED items for the comment tab dot.
+  // - Mark all notifications for this candidate as read (clears bell badge).
   useEffect(() => {
     if (!open || !card) return;
     fetch(`/api/notifications?candidateJobId=${card.candidateJobId}`)
       .then((r) => r.json())
       .then((d) => {
-        const item = d.items?.find(
-          (i: { candidateJobId: string; unreadCount: number }) =>
-            i.candidateJobId === card.candidateJobId
-        );
-        const count = item?.unreadCount ?? 0;
-        setUnreadCount(count);
-        if (tab === "comments" && count > 0) {
-          fetch(`/api/candidate-jobs/${card.candidateJobId}/mark-comments-read`, {
-            method: "POST",
-          }).catch(() => {});
-          setUnreadCount(0);
-        }
+        const commentCount = (d.items ?? []).filter(
+          (i: { type: string }) => i.type === "COMMENT_ADDED"
+        ).length;
+        setUnreadCount(commentCount);
+        // Clear bell badge — vendor has opened the candidate drawer
+        fetch("/api/notifications/mark-read", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ candidateJobId: card.candidateJobId }),
+        }).catch(() => {});
       })
       .catch(() => {});
   // eslint-disable-next-line react-hooks/exhaustive-deps

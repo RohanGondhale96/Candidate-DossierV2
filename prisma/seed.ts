@@ -915,6 +915,38 @@ async function main() {
           },
         });
       }
+
+      // Seed Notification rows so the bell has demo data on first load
+      if (cj.clientUserId) {
+        if (cj.stage === "ACCEPTED") {
+          await prisma.notification.create({
+            data: {
+              recipientId: cj.vendorId,
+              actorId: cj.clientUserId,
+              type: "STAGE_ACCEPTED",
+              candidateJobId: created.id,
+            },
+          });
+        } else if (cj.stage === "NOT_A_FIT") {
+          await prisma.notification.create({
+            data: {
+              recipientId: cj.vendorId,
+              actorId: cj.clientUserId,
+              type: "STAGE_NOT_A_FIT",
+              candidateJobId: created.id,
+            },
+          });
+        } else if (cj.stage === "PRESENTED") {
+          await prisma.notification.create({
+            data: {
+              recipientId: cj.vendorId,
+              actorId: cj.clientUserId,
+              type: "COMMENT_ADDED",
+              candidateJobId: created.id,
+            },
+          });
+        }
+      }
     }
   }
 

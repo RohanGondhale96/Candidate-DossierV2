@@ -5,6 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { requireUser, jsonError, handleApiError } from "@/lib/api";
 import { VALID_TRANSITIONS, isValidStage } from "@/lib/constants";
 import type { PipelineStage } from "@/lib/constants";
+import { createNotification } from "@/lib/notifications";
 
 interface Params {
   params: { candidateJobId: string };
@@ -64,6 +65,19 @@ export async function PATCH(req: NextRequest, { params }: Params) {
         ...rejectedAtStageUpdate,
       },
     });
+
+    // Notify the vendor when a client accepts or rejects a candidate
+    if (
+      user.role === "CLIENT" &&
+      (newStage === "ACCEPTED" || newStage === "NOT_A_FIT")
+    ) {
+      createNotification({
+        recipientId: cj.vendorUserId,
+        actorId: user.id,
+        type: newStage === "ACCEPTED" ? "STAGE_ACCEPTED" : "STAGE_NOT_A_FIT",
+        candidateJobId: cj.id,
+      }).catch(() => {});
+    }
 
     return NextResponse.json({
       success: true,

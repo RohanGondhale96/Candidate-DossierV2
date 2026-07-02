@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { prisma } from "@/lib/prisma";
 import { requireUser, jsonError, handleApiError } from "@/lib/api";
+import { createNotification } from "@/lib/notifications";
 
 // Both the assigned vendor and the job's client may read & post comments on a
 // candidate-job (a two-way feedback thread).
@@ -79,6 +80,22 @@ export async function POST(req: NextRequest) {
       data: { candidateJobId, userId: user.id, content },
       include: { user: { select: { name: true, role: true } } },
     });
+
+    // Notify the vendor when a client posts a comment
+    if (user.role === "CLIENT") {
+      const cj = await prisma.candidateJob.findUnique({
+        where: { id: candidateJobId },
+        select: { vendorUserId: true },
+      });
+      if (cj) {
+        createNotification({
+          recipientId: cj.vendorUserId,
+          actorId: user.id,
+          type: "COMMENT_ADDED",
+          candidateJobId,
+        }).catch(() => {});
+      }
+    }
 
     return NextResponse.json({
       comment: {

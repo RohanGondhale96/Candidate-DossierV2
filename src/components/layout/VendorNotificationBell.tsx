@@ -2,19 +2,43 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Bell } from "lucide-react";
+import { Bell, CheckCircle2, MessageSquare, XCircle } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
 import { cn } from "@/lib/utils";
 
+type NotifType = "COMMENT_ADDED" | "STAGE_ACCEPTED" | "STAGE_NOT_A_FIT";
+
 interface NotificationItem {
+  id: string;
+  type: NotifType;
   candidateJobId: string;
   candidateName: string;
   jobTitle: string;
-  unreadCount: number;
-  lastCommentPreview: string;
-  lastCommentAt: string;
+  actorName: string;
+  createdAt: string;
 }
+
+const TYPE_CONFIG: Record<
+  NotifType,
+  { icon: typeof MessageSquare; iconClass: string; label: (actor: string) => string }
+> = {
+  COMMENT_ADDED: {
+    icon: MessageSquare,
+    iconClass: "bg-blue-50 text-blue-600",
+    label: (actor) => `New comment from ${actor}`,
+  },
+  STAGE_ACCEPTED: {
+    icon: CheckCircle2,
+    iconClass: "bg-green-50 text-green-600",
+    label: (actor) => `Accepted by ${actor}`,
+  },
+  STAGE_NOT_A_FIT: {
+    icon: XCircle,
+    iconClass: "bg-orange-50 text-orange-600",
+    label: (actor) => `Marked not a fit by ${actor}`,
+  },
+};
 
 export function VendorNotificationBell() {
   const router = useRouter();
@@ -87,43 +111,46 @@ export function VendorNotificationBell() {
           {items.length === 0 ? (
             <div className="flex flex-col items-center gap-2 px-4 py-10 text-center">
               <Bell className="h-7 w-7 text-muted-foreground/30" />
-              <p className="text-[13px] text-muted-foreground">No new comments</p>
+              <p className="text-[13px] text-muted-foreground">No new notifications</p>
             </div>
           ) : (
             <div className="max-h-[360px] divide-y overflow-y-auto">
-              {items.map((item) => (
-                <button
-                  key={item.candidateJobId}
-                  onClick={() => handleItemClick(item.candidateJobId)}
-                  className="flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/50"
-                >
-                  <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-50 text-blue-600">
-                    <span className="text-[11px] font-bold">{item.unreadCount}</span>
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-baseline justify-between gap-2">
-                      <p className="truncate text-[13px] font-semibold text-foreground">
-                        {item.candidateName}
-                      </p>
-                      {item.lastCommentAt && (
-                        <span className="shrink-0 text-[11px] text-muted-foreground">
-                          {formatDistanceToNow(new Date(item.lastCommentAt), {
-                            addSuffix: true,
-                          })}
-                        </span>
+              {items.map((item) => {
+                const cfg = TYPE_CONFIG[item.type];
+                const Icon = cfg.icon;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => handleItemClick(item.candidateJobId)}
+                    className="flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/50"
+                  >
+                    <div
+                      className={cn(
+                        "mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full",
+                        cfg.iconClass
                       )}
+                    >
+                      <Icon className="h-4 w-4" />
                     </div>
-                    <p className="truncate text-[11px] text-muted-foreground">
-                      {item.jobTitle}
-                    </p>
-                    {item.lastCommentPreview && (
-                      <p className="mt-1 line-clamp-2 text-[12px] text-foreground/70">
-                        &ldquo;{item.lastCommentPreview}&rdquo;
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-baseline justify-between gap-2">
+                        <p className="truncate text-[13px] font-semibold text-foreground">
+                          {item.candidateName}
+                        </p>
+                        <span className="shrink-0 text-[11px] text-muted-foreground">
+                          {formatDistanceToNow(new Date(item.createdAt), { addSuffix: true })}
+                        </span>
+                      </div>
+                      <p className="truncate text-[11px] text-muted-foreground">
+                        {item.jobTitle}
                       </p>
-                    )}
-                  </div>
-                </button>
-              ))}
+                      <p className="mt-0.5 text-[12px] text-foreground/70">
+                        {cfg.label(item.actorName)}
+                      </p>
+                    </div>
+                  </button>
+                );
+              })}
             </div>
           )}
         </div>

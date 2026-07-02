@@ -13,57 +13,30 @@ export async function GET(req: Request) {
     const { searchParams } = new URL(req.url);
     const filterCandidateJobId = searchParams.get("candidateJobId");
 
-    const candidateJobs = await prisma.candidateJob.findMany({
+    const notifications = await prisma.notification.findMany({
       where: {
-        vendorUserId: user.id,
-        ...(filterCandidateJobId ? { id: filterCandidateJobId } : {}),
+        recipientId: user.id,
+        readAt: null,
+        ...(filterCandidateJobId ? { candidateJobId: filterCandidateJobId } : {}),
       },
       include: {
-        candidate: true,
-        job: true,
-        comments: {
-          include: { user: true },
-          orderBy: { createdAt: "desc" },
-        },
+        candidateJob: { include: { candidate: true, job: true } },
+        actor: { select: { name: true } },
       },
+      orderBy: { createdAt: "desc" },
     });
 
-    const items: Array<{
-      candidateJobId: string;
-      candidateName: string;
-      jobTitle: string;
-      unreadCount: number;
-      lastCommentPreview: string;
-      lastCommentAt: string;
-    }> = [];
-    let total = 0;
+    const items = notifications.map((n) => ({
+      id: n.id,
+      type: n.type as "COMMENT_ADDED" | "STAGE_ACCEPTED" | "STAGE_NOT_A_FIT",
+      candidateJobId: n.candidateJobId,
+      candidateName: `${n.candidateJob.candidate.firstName} ${n.candidateJob.candidate.lastName}`,
+      jobTitle: n.candidateJob.job.title,
+      actorName: n.actor.name,
+      createdAt: n.createdAt.toISOString(),
+    }));
 
-    for (const cj of candidateJobs) {
-      const clientComments = cj.comments.filter((c) => c.user.role === "CLIENT");
-      const unreadCount = clientComments.filter(
-        (c) => !cj.vendorLastReadAt || c.createdAt > cj.vendorLastReadAt
-      ).length;
-
-      if (unreadCount > 0) {
-        const latest = clientComments[0];
-        items.push({
-          candidateJobId: cj.id,
-          candidateName: `${cj.candidate.firstName} ${cj.candidate.lastName}`,
-          jobTitle: cj.job.title,
-          unreadCount,
-          lastCommentPreview: latest?.content.slice(0, 100) ?? "",
-          lastCommentAt: latest?.createdAt.toISOString() ?? "",
-        });
-        total += unreadCount;
-      }
-    }
-
-    items.sort(
-      (a, b) =>
-        new Date(b.lastCommentAt).getTime() - new Date(a.lastCommentAt).getTime()
-    );
-
-    return NextResponse.json({ total, items });
+    return NextResponse.json({ total: items.length, items });
   } catch (e) {
     console.error(e);
     return jsonError("Internal server error", 500);
