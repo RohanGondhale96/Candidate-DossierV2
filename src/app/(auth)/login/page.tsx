@@ -17,8 +17,8 @@ import {
 } from "@/components/ui/card";
 
 const DEMO_ACCOUNTS = [
-  { label: "Rahul (RippleHire)", email: "vendor1@ripplehire.com" },
-  { label: "Priya (RippleHire)", email: "vendor2@ripplehire.com" },
+  { label: "Rahul (RippleHire)", email: "rec1@ripplehire.com" },
+  { label: "Priya (RippleHire)", email: "rec2@ripplehire.com" },
   { label: "Client — Amit (Acme Bank)", email: "client1@acmebank.com" },
   { label: "Client — Neha (Globex Securities)", email: "client2@globexsecurities.com" },
 ];
