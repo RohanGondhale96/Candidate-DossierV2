@@ -11,8 +11,8 @@ import type { ResumeTheme } from "../templates/theme";
 import { SectionTitle } from "./SectionTitle";
 
 function ratingColor(r: number): string {
-  if (r >= 3.5) return "#1D9E75"; // green
-  if (r >= 2) return "#D9A21B"; // amber
+  if (r >= 4) return "#1D9E75"; // green
+  if (r >= 2.5) return "#D9A21B"; // amber
   return "#D85A30"; // red
 }
 
