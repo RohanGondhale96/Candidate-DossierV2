@@ -7,12 +7,12 @@ import type {
   SectionData,
 } from "../types/resume";
 
-// Deterministic "assessed" proficiency (2.0–5.0 in 0.5 steps) derived from the
+// Deterministic "assessed" proficiency (3.5, 4.0, or 4.5) derived from the
 // skill name, so the rating is stable across rebuilds rather than random.
 export function skillRating(name: string): number {
   let h = 0;
   for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
-  return 2 + (h % 7) * 0.5; // 2.0, 2.5, ... 5.0
+  return 3.5 + (h % 3) * 0.5; // 3.5, 4.0, or 4.5
 }
 
 /**
@@ -63,11 +63,9 @@ export function buildInitialResumeContent(
     order: order++,
     visible: true,
     data: {
-      skills: candidate.skills.map((name) => ({
-        id: uuidv4(),
-        name,
-        rating: skillRating(name),
-      })),
+      skills: candidate.skills
+        .map((name) => ({ id: uuidv4(), name, rating: skillRating(name) }))
+        .sort((a, b) => b.rating - a.rating),
     },
   });
 
